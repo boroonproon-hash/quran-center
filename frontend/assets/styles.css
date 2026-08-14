@@ -1,0 +1,1103 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: #f8f5ec;
+    color: #173d32;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.container {
+    width: min(1120px, 90%);
+    margin: 0 auto;
+}
+
+/* Башкы меню */
+
+.header {
+    background-color: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #e5dfcf;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-inner {
+    min-height: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: #174b3a;
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 28px;
+}
+
+.logo strong,
+.logo small {
+    display: block;
+}
+
+.logo strong {
+    color: #174b3a;
+    font-family: Georgia, serif;
+    letter-spacing: 1px;
+}
+
+.logo small {
+    color: #6c776f;
+    font-size: 11px;
+}
+
+.navigation {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.navigation a {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.navigation a:hover {
+    color: #b78d38;
+}
+
+.header-button {
+    padding: 11px 22px;
+    border-radius: 8px;
+    background-color: #174b3a;
+    color: white;
+    font-weight: 700;
+}
+
+/* Негизги бөлүк */
+
+.hero {
+    min-height: calc(100vh - 84px);
+    display: flex;
+    align-items: center;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(220, 185, 105, 0.24), transparent 30%),
+        linear-gradient(135deg, #f9f6ed 0%, #edf3eb 100%);
+}
+
+.hero-content {
+    padding-top: 90px;
+    padding-bottom: 100px;
+}
+
+.arabic-text {
+    color: #b78d38;
+    font-family: Georgia, serif;
+    font-size: 25px;
+    margin-bottom: 24px;
+}
+
+.hero-label {
+    color: #b78d38;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+}
+
+.hero h1 {
+    max-width: 760px;
+    color: #123c30;
+    font-family: Georgia, serif;
+    font-size: clamp(45px, 7vw, 82px);
+    line-height: 1.06;
+}
+
+.hero h1 span {
+    color: #b78d38;
+}
+
+.hero-description {
+    max-width: 650px;
+    margin-top: 25px;
+    color: #53665e;
+    font-size: 19px;
+}
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 34px;
+}
+
+.button {
+    display: inline-block;
+    padding: 14px 25px;
+    border: 2px solid #174b3a;
+    border-radius: 9px;
+    font-weight: 700;
+}
+
+.button-primary {
+    background-color: #174b3a;
+    color: white;
+}
+
+.button-secondary {
+    color: #174b3a;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+}
+
+.hero-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-top: 45px;
+    color: #53665e;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Телефон үчүн */
+
+@media (max-width: 850px) {
+    .navigation {
+        display: none;
+    }
+
+    .header-button {
+        padding: 9px 15px;
+    }
+
+    .hero-content {
+        padding-top: 65px;
+        padding-bottom: 70px;
+    }
+
+    .hero h1 {
+        font-size: 46px;
+    }
+}
+
+@media (max-width: 520px) {
+    .logo small {
+        display: none;
+    }
+
+    .header-button {
+        font-size: 13px;
+    }
+
+    .hero h1 {
+        font-size: 39px;
+    }
+
+    .hero-description {
+        font-size: 17px;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+    }
+
+    .button {
+        text-align: center;
+    }
+
+    .hero-features {
+        flex-direction: column;
+        gap: 10px;
+    }
+}/* Курстар бөлүмү */
+
+.courses-section {
+    padding: 110px 0;
+    background-color: #ffffff;
+}
+
+.section-heading {
+    max-width: 720px;
+    margin: 0 auto 55px;
+    text-align: center;
+}
+
+.section-label {
+    margin-bottom: 12px;
+    color: #b78d38;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.section-heading h2 {
+    margin-bottom: 18px;
+    color: #123c30;
+    font-family: Georgia, serif;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.15;
+}
+
+.section-heading > p:last-child {
+    color: #64736c;
+    font-size: 17px;
+}
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.course-card {
+    position: relative;
+    padding: 35px;
+    overflow: hidden;
+    background-color: #faf8f1;
+    border: 1px solid #e8e1d2;
+    border-radius: 18px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.course-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 18px 40px rgba(18, 60, 48, 0.12);
+}
+
+.course-icon {
+    width: 58px;
+    height: 58px;
+    margin-bottom: 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    background-color: #174b3a;
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 29px;
+}
+
+.course-level {
+    margin-bottom: 8px;
+    color: #b78d38;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.course-card h3 {
+    margin-bottom: 14px;
+    color: #173d32;
+    font-family: Georgia, serif;
+    font-size: 27px;
+}
+
+.course-card > p:not(.course-level) {
+    min-height: 78px;
+    margin-bottom: 24px;
+    color: #64736c;
+}
+
+.course-card a {
+    color: #174b3a;
+    font-weight: 800;
+}
+
+.course-card a span {
+    margin-left: 5px;
+    color: #b78d38;
+}
+
+.featured-course {
+    background-color: #174b3a;
+    border-color: #174b3a;
+}
+
+.featured-course h3,
+.featured-course a {
+    color: #ffffff;
+}
+
+.featured-course > p:not(.course-level) {
+    color: #d9e4df;
+}
+
+.featured-course .course-icon {
+    background-color: #ffffff;
+}
+
+/* Курстарды телефонго ылайыкташтыруу */
+
+@media (max-width: 900px) {
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .courses-section {
+        padding: 75px 0;
+    }
+
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .course-card {
+        padding: 28px;
+    }
+
+    .course-card > p:not(.course-level) {
+        min-height: auto;
+    }
+}/* Биз жөнүндө */
+
+.about-section {
+    padding: 110px 0;
+    background-color: #f8f5ec;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    align-items: center;
+    gap: 90px;
+}
+
+.about-visual {
+    position: relative;
+    min-height: 520px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle, rgba(220, 185, 105, 0.28), transparent 35%),
+        linear-gradient(145deg, #174b3a, #0d3126);
+}
+
+.about-pattern {
+    color: rgba(220, 185, 105, 0.9);
+    font-family: Georgia, serif;
+    font-size: 190px;
+    text-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.experience-card {
+    position: absolute;
+    right: 25px;
+    bottom: 25px;
+    width: 165px;
+    padding: 22px;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+}
+
+.experience-card strong,
+.experience-card span {
+    display: block;
+}
+
+.experience-card strong {
+    color: #b78d38;
+    font-family: Georgia, serif;
+    font-size: 42px;
+    line-height: 1;
+}
+
+.experience-card span {
+    margin-top: 7px;
+    color: #53665e;
+    font-weight: 700;
+}
+
+.about-content h2 {
+    margin: 10px 0 25px;
+    color: #123c30;
+    font-family: Georgia, serif;
+    font-size: clamp(36px, 5vw, 55px);
+    line-height: 1.12;
+}
+
+.about-content > p:not(.section-label) {
+    margin-bottom: 17px;
+    color: #607068;
+    font-size: 17px;
+}
+
+.about-benefits {
+    display: grid;
+    gap: 18px;
+    margin: 30px 0 35px;
+}
+
+.about-benefits > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+}
+
+.about-benefits span {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: #174b3a;
+    color: #dcb969;
+    font-weight: 800;
+}
+
+.about-benefits strong {
+    display: block;
+    color: #173d32;
+    font-size: 16px;
+}
+
+.about-benefits p {
+    color: #69766f;
+    font-size: 14px;
+}
+
+/* Статистика */
+
+.statistics {
+    padding: 65px 0;
+    background-color: #174b3a;
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.stat-item {
+    padding: 10px 25px;
+    text-align: center;
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.stat-item:last-child {
+    border-right: none;
+}
+
+.stat-item strong,
+.stat-item span {
+    display: block;
+}
+
+.stat-item strong {
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 44px;
+}
+
+.stat-item span {
+    margin-top: 5px;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Телефон жана планшет */
+
+@media (max-width: 900px) {
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+
+    .about-visual {
+        min-height: 420px;
+    }
+
+    .statistics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 35px 0;
+    }
+
+    .stat-item:nth-child(2) {
+        border-right: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .about-section {
+        padding: 75px 0;
+    }
+
+    .about-visual {
+        min-height: 340px;
+    }
+
+    .about-pattern {
+        font-size: 130px;
+    }
+
+    .statistics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-item {
+        border-right: none;
+    }
+}/* Куран үйрөнүүнүн баскычтары */
+
+.learning-section {
+    padding: 110px 0;
+    background-color: #ffffff;
+}
+
+.learning-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.learning-step {
+    position: relative;
+    padding: 34px;
+    overflow: hidden;
+    border: 1px solid #e5dfd1;
+    border-radius: 18px;
+    background-color: #faf8f1;
+    transition: 0.25s ease;
+}
+
+.learning-step:hover {
+    border-color: #dcb969;
+    transform: translateY(-6px);
+    box-shadow: 0 16px 35px rgba(18, 60, 48, 0.1);
+}
+
+.step-number {
+    position: absolute;
+    top: 17px;
+    right: 22px;
+    color: rgba(23, 75, 58, 0.12);
+    font-family: Georgia, serif;
+    font-size: 46px;
+    font-weight: 800;
+}
+
+.step-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: #174b3a;
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 25px;
+}
+
+.learning-step:nth-child(even) .step-icon {
+    background-color: #dcb969;
+    color: #174b3a;
+}
+
+.learning-step h3 {
+    margin-bottom: 12px;
+    color: #173d32;
+    font-family: Georgia, serif;
+    font-size: 25px;
+}
+
+.learning-step p {
+    color: #66756e;
+    font-size: 15px;
+}
+
+/* Телефон жана планшет */
+
+@media (max-width: 900px) {
+    .learning-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .learning-section {
+        padding: 75px 0;
+    }
+
+    .learning-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .learning-step {
+        padding: 28px;
+    }
+}/* Мугалимдер */
+
+.teachers-section {
+    padding: 110px 0;
+    background-color: #f8f5ec;
+}
+
+.teachers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.teacher-card {
+    overflow: hidden;
+    border: 1px solid #e4ddcf;
+    border-radius: 20px;
+    background-color: #ffffff;
+    transition: 0.25s ease;
+}
+
+.teacher-card:hover {
+    transform: translateY(-7px);
+    box-shadow: 0 18px 40px rgba(18, 60, 48, 0.12);
+}
+
+.teacher-photo {
+    height: 285px;
+    display: grid;
+    place-items: center;
+    background:
+        radial-gradient(circle, rgba(220, 185, 105, 0.28), transparent 35%),
+        linear-gradient(145deg, #174b3a, #0d3126);
+}
+
+.teacher-photo span {
+    width: 115px;
+    height: 115px;
+    display: grid;
+    place-items: center;
+    border: 2px solid rgba(220, 185, 105, 0.8);
+    border-radius: 50%;
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 55px;
+}
+
+.teacher-information {
+    padding: 28px;
+}
+
+.teacher-subject {
+    margin-bottom: 8px;
+    color: #b78d38;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.teacher-information h3 {
+    margin-bottom: 12px;
+    color: #173d32;
+    font-family: Georgia, serif;
+    font-size: 25px;
+}
+
+.teacher-information > p:not(.teacher-subject) {
+    min-height: 72px;
+    color: #66756e;
+    font-size: 15px;
+}
+
+.teacher-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.teacher-details span {
+    padding: 7px 10px;
+    border-radius: 20px;
+    background-color: #eef3ef;
+    color: #174b3a;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Мугалимдер бөлүмүн телефонго ылайыкташтыруу */
+
+@media (max-width: 900px) {
+    .teachers-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .teachers-section {
+        padding: 75px 0;
+    }
+
+    .teachers-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .teacher-photo {
+        height: 240px;
+    }
+
+    .teacher-information > p:not(.teacher-subject) {
+        min-height: auto;
+    }
+}/* Катталуу бөлүмү */
+
+.registration-section {
+    padding: 110px 0;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(220, 185, 105, 0.18), transparent 28%),
+        linear-gradient(145deg, #123c30, #0b2b22);
+}
+
+.registration-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    align-items: center;
+    gap: 85px;
+}
+
+.registration-content h2 {
+    margin: 10px 0 22px;
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-size: clamp(38px, 5vw, 56px);
+    line-height: 1.12;
+}
+
+.registration-content > p:not(.section-label) {
+    max-width: 520px;
+    color: #cad8d2;
+    font-size: 17px;
+}
+
+.contact-list {
+    display: grid;
+    gap: 20px;
+    margin-top: 38px;
+}
+
+.contact-list > div {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.contact-list span {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(220, 185, 105, 0.55);
+    border-radius: 50%;
+    color: #dcb969;
+}
+
+.contact-list p {
+    color: #d3dfda;
+}
+
+.contact-list strong {
+    display: block;
+    color: #ffffff;
+}
+
+.registration-form {
+    padding: 42px;
+    border-radius: 22px;
+    background-color: #ffffff;
+    box-shadow: 0 24px 65px rgba(0, 0, 0, 0.25);
+}
+
+.form-heading {
+    margin-bottom: 28px;
+}
+
+.form-heading h3 {
+    color: #173d32;
+    font-family: Georgia, serif;
+    font-size: 30px;
+}
+
+.form-heading p {
+    color: #708078;
+}
+
+.form-group {
+    margin-bottom: 19px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #173d32;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    height: 52px;
+    padding: 0 15px;
+    outline: none;
+    border: 1px solid #d9dedb;
+    border-radius: 9px;
+    background-color: #fbfcfb;
+    color: #173d32;
+    font: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #b78d38;
+    box-shadow: 0 0 0 3px rgba(183, 141, 56, 0.13);
+}
+
+.form-button {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 7px;
+    border: none;
+    border-radius: 9px;
+    background-color: #174b3a;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+}
+
+.form-button:hover {
+    background-color: #0f392b;
+}
+
+.form-message {
+    display: none;
+    margin-top: 18px;
+    padding: 13px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.form-message.success {
+    display: block;
+    background-color: #e8f4ec;
+    color: #176234;
+}
+
+.form-message.error {
+    display: block;
+    background-color: #fdeaea;
+    color: #a52e2e;
+}
+
+@media (max-width: 850px) {
+    .registration-grid {
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+}
+
+@media (max-width: 520px) {
+    .registration-section {
+        padding: 75px 0;
+    }
+
+    .registration-form {
+        padding: 27px 20px;
+    }
+}/* Footer */
+
+.footer {
+    padding-top: 75px;
+    background-color: #081f19;
+    color: #c8d5d0;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+    gap: 55px;
+    padding-bottom: 60px;
+}
+
+.footer-logo {
+    width: max-content;
+    margin-bottom: 22px;
+}
+
+.footer-logo strong {
+    color: #ffffff;
+}
+
+.footer-logo small {
+    color: #9fb1aa;
+}
+
+.footer-about > p {
+    max-width: 330px;
+    color: #9fb1aa;
+    font-size: 14px;
+}
+
+.footer-column h3 {
+    margin-bottom: 20px;
+    color: #ffffff;
+    font-family: Georgia, serif;
+    font-size: 19px;
+}
+
+.footer-links {
+    display: grid;
+    gap: 11px;
+}
+
+.footer-links a,
+.footer-links span {
+    color: #9fb1aa;
+    font-size: 14px;
+}
+
+.footer-links a:hover {
+    color: #dcb969;
+}
+
+.footer-bottom {
+    min-height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-bottom p,
+.footer-bottom a {
+    color: #869b93;
+    font-size: 13px;
+}
+
+.footer-bottom a:hover {
+    color: #dcb969;
+}
+
+@media (max-width: 900px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .footer {
+        padding-top: 60px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 38px;
+    }
+
+    .footer-bottom {
+        padding: 22px 0;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+}/* Мобилдик меню */
+
+.menu-button {
+    display: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #d8dedb;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #174b3a;
+    cursor: pointer;
+    font-size: 25px;
+    line-height: 1;
+}
+
+.mobile-navigation {
+    display: none;
+}
+
+@media (max-width: 850px) {
+    .menu-button {
+        display: grid;
+        place-items: center;
+    }
+
+    .header-button {
+        display: none;
+    }
+
+    .mobile-navigation {
+        padding: 8px 5%;
+        border-top: 1px solid #e5dfcf;
+        background-color: #ffffff;
+    }
+
+    .mobile-navigation.active {
+        display: grid;
+    }
+
+    .mobile-navigation a {
+        padding: 13px 5px;
+        border-bottom: 1px solid #edf0ee;
+        color: #174b3a;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .mobile-navigation a:last-child {
+        border-bottom: none;
+    }
+
+    .mobile-navigation .mobile-register {
+        margin: 10px 0;
+        border-radius: 8px;
+        background-color: #174b3a;
+        color: #ffffff;
+        text-align: center;
+    }
+}.form-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}

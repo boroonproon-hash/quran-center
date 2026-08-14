@@ -1,0 +1,339 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background-color: #f4f6f4;
+    color: #173d32;
+    font-family: Arial, sans-serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button {
+    font: inherit;
+}
+
+.admin-container {
+    width: min(1180px, 92%);
+    margin: 0 auto;
+}
+
+.admin-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dfe5e1;
+}
+
+.header-inner {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.admin-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-logo > span {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background-color: #174b3a;
+    color: #dcb969;
+    font-family: Georgia, serif;
+    font-size: 25px;
+}
+
+.admin-logo strong,
+.admin-logo small {
+    display: block;
+}
+
+.admin-logo strong {
+    font-family: Georgia, serif;
+}
+
+.admin-logo small {
+    margin-top: 2px;
+    color: #718078;
+    font-size: 11px;
+}
+
+.home-link {
+    padding: 10px 16px;
+    border: 1px solid #174b3a;
+    border-radius: 8px;
+    color: #174b3a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-main {
+    padding: 60px 0 90px;
+}
+
+.page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 35px;
+}
+
+.eyebrow {
+    margin-bottom: 8px;
+    color: #b78d38;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.page-heading h1 {
+    font-family: Georgia, serif;
+    font-size: clamp(35px, 5vw, 50px);
+}
+
+.page-heading > div > p:last-child {
+    margin-top: 8px;
+    color: #6c7a73;
+}
+
+#refreshButton {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    background-color: #174b3a;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+#refreshButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.summary-card {
+    padding: 25px;
+    border: 1px solid #e0e5e2;
+    border-radius: 15px;
+    background-color: #ffffff;
+}
+
+.summary-card span,
+.summary-card strong {
+    display: block;
+}
+
+.summary-card span {
+    color: #718078;
+    font-size: 14px;
+}
+
+.summary-card strong {
+    margin-top: 7px;
+    color: #174b3a;
+    font-family: Georgia, serif;
+    font-size: 38px;
+}
+
+.table-card {
+    overflow: hidden;
+    border: 1px solid #e0e5e2;
+    border-radius: 17px;
+    background-color: #ffffff;
+}
+
+.table-heading {
+    padding: 25px;
+    border-bottom: 1px solid #e8ece9;
+}
+
+.table-heading h2 {
+    font-family: Georgia, serif;
+    font-size: 23px;
+}
+
+.table-heading p {
+    margin-top: 5px;
+    color: #718078;
+    font-size: 13px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+th,
+td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #edf0ee;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background-color: #f8faf8;
+    color: #56665e;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+td {
+    color: #405249;
+}
+
+.format-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background-color: #e9f3ed;
+    color: #176234;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.empty-message {
+    display: none;
+    padding: 40px 20px;
+    color: #718078;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .admin-main {
+        padding-top: 40px;
+    }
+
+    .page-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #refreshButton {
+        width: 100%;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+}/* Катталуу статусу */
+
+.status-select {
+    min-width: 145px;
+    padding: 8px 30px 8px 10px;
+    outline: none;
+    border: 1px solid #d7ded9;
+    border-radius: 8px;
+    background-color: #f7f9f7;
+    color: #405249;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-select:focus {
+    border-color: #b78d38;
+}
+
+.status-select[data-status="Жаңы"] {
+    background-color: #fff6da;
+    color: #8a6414;
+}
+
+.status-select[data-status="Байланыштык"] {
+    background-color: #e8f0ff;
+    color: #2456a4;
+}
+
+.status-select[data-status="Окууга кабыл алынды"] {
+    background-color: #e5f5ea;
+    color: #176234;
+}
+
+.status-select:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}/* Издөө жана чыпкалоо */
+
+.table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.table-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-filters input,
+.table-filters select {
+    height: 42px;
+    padding: 0 13px;
+    outline: none;
+    border: 1px solid #d7ded9;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #405249;
+    font: inherit;
+    font-size: 13px;
+}
+
+.table-filters input {
+    width: 230px;
+}
+
+.table-filters input:focus,
+.table-filters select:focus {
+    border-color: #b78d38;
+}
+
+tr[hidden] {
+    display: none;
+}
+
+@media (max-width: 750px) {
+    .table-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .table-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .table-filters input,
+    .table-filters select {
+        width: 100%;
+    }
+}

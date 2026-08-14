@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Админ панель — Quran Center</title>
+
+    <link rel="stylesheet" href="/assets/admin.css">
+</head>
+
+<body>
+
+<header class="admin-header">
+    <div class="admin-container header-inner">
+        <a href="/" class="admin-logo">
+            <span>ق</span>
+
+            <div>
+                <strong>QURAN CENTER</strong>
+                <small>Админ панель</small>
+            </div>
+        </a>
+
+        <a href="/" class="home-link">Сайтка кайтуу</a>
+    </div>
+</header>
+
+<main class="admin-main">
+    <div class="admin-container">
+
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">БАШКАРУУ ПАНЕЛИ</p>
+                <h1>Катталуу өтүнүчтөрү</h1>
+                <p>Курстарга катталган окуучулардын тизмеси.</p>
+            </div>
+
+            <button type="button" id="refreshButton">
+                Тизмени жаңыртуу
+            </button>
+        </section>
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <span>Жалпы өтүнүч</span>
+                <strong id="totalCount">0</strong>
+            </article>
+
+            <article class="summary-card">
+                <span>Онлайн</span>
+                <strong id="onlineCount">0</strong>
+            </article>
+
+            <article class="summary-card">
+                <span>Офлайн</span>
+                <strong id="offlineCount">0</strong>
+            </article>
+        </section>
+
+        <section class="table-card">
+            <div class="table-heading">
+    <div>
+        <h2>Окуучулардын тизмеси</h2>
+        <p id="loadingText">Маалымат жүктөлүүдө...</p>
+    </div>
+
+    <div class="table-filters">
+        <input
+            type="search"
+            id="searchInput"
+            placeholder="Аты, телефон же курс..."
+        >
+
+        <select id="statusFilter">
+            <option value="">Бардык статустар</option>
+            <option value="Жаңы">Жаңы</option>
+            <option value="Байланыштык">Байланыштык</option>
+            <option value="Окууга кабыл алынды">
+                Окууга кабыл алынды
+            </option>
+        </select>
+    </div>
+</div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Аты-жөнү</th>
+                            <th>Телефон</th>
+                            <th>Курс</th>
+                            <th>Формат</th>
+                            <th>Статус</th>
+                            <th>Катталган убакыт</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="registrationsTable"></tbody>
+                </table>
+            </div>
+
+            <div class="empty-message" id="emptyMessage">
+                Азырынча катталуу өтүнүчү жок.
+            </div>
+        </section>
+
+    </div>
+</main>
+
+<script src="/assets/admin.js"></script>
+
+</body>
+</html>
