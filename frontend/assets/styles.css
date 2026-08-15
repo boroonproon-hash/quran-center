@@ -1100,4 +1100,32 @@ a {
 }.form-button:disabled {
     cursor: not-allowed;
     opacity: 0.65;
+}.login-link {
+    color: #0f513f;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.login-link:hover {
+    color: #c89b3c;
+}.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.header-actions .login-link {
+    color: #0f513f;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.header-actions .login-link:hover {
+    color: #c89b3c;
+}
+
+@media (max-width: 900px) {
+    .header-actions {
+        display: none;
+    }
 }
