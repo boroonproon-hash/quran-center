@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Жеке кабинет — Quran Center</title>
+
+    <link rel="stylesheet" href="/assets/auth.css">
+</head>
+
+<body>
+    <main class="dashboard-page">
+        <section class="dashboard-card">
+            <header class="dashboard-header">
+                <a href="/" class="auth-logo">
+                    <span class="logo-icon">ق</span>
+
+                    <span>
+                        <strong>QURAN CENTER</strong>
+                        <small>Жеке кабинет</small>
+                    </span>
+                </a>
+
+                <button id="logout-button" class="logout-button" type="button">
+                    Чыгуу
+                </button>
+            </header>
+
+            <div id="dashboard-loading" class="dashboard-loading">
+                Маалымат жүктөлүүдө...
+            </div>
+
+            <div id="dashboard-content" class="dashboard-content" hidden>
+                <p class="eyebrow">КОШ КЕЛИҢИЗ</p>
+                <h1 id="profile-name">Колдонуучу</h1>
+
+                <p class="dashboard-description">
+                    Quran Center жеке кабинетиңиз.
+                </p>
+
+                <div class="profile-information">
+                    <div class="profile-item">
+                        <span>Аты-жөнү</span>
+                        <strong id="profile-full-name">—</strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Телефон номери</span>
+                        <strong id="profile-phone-number">—</strong>
+                    </div>
+                </div>
+
+                <a href="/#courses" class="dashboard-link">
+                    Курстарды көрүү
+                </a>
+            </div>
+
+            <p id="dashboard-message" class="form-message"></p>
+        </section>
+    </main>
+
+    <script src="/assets/dashboard.js"></script>
+</body>
+</html>

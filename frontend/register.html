@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Катталуу — Quran Center</title>
+
+    <link rel="stylesheet" href="/assets/auth.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <a href="/" class="auth-logo">
+                <span class="logo-icon">ق</span>
+
+                <span>
+                    <strong>QURAN CENTER</strong>
+                    <small>Куран үйрөнүү борбору</small>
+                </span>
+            </a>
+
+            <div class="auth-heading">
+                <p class="eyebrow">ЖАҢЫ АККАУНТ</p>
+                <h1>Катталуу</h1>
+                <p>Жеке кабинетиңизди ачуу үчүн маалыматтарды толтуруңуз.</p>
+            </div>
+
+            <form id="register-form" class="auth-form">
+                <label for="full-name">Аты-жөнүңүз</label>
+                <input
+                    id="full-name"
+                    name="full_name"
+                    type="text"
+                    placeholder="Аты-жөнүңүз"
+                    autocomplete="name"
+                    minlength="3"
+                    required
+                >
+
+                <label for="phone-number">Телефон номери</label>
+                <input
+                    id="phone-number"
+                    name="phone_number"
+                    type="tel"
+                    placeholder="+996 700 000 000"
+                    autocomplete="tel"
+                    required
+                >
+
+                <label for="password">Сырсөз</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Кеминде 8 белги"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
+
+                <button id="register-button" type="submit">
+                    Аккаунт түзүү
+                </button>
+
+                <p id="form-message" class="form-message"></p>
+            </form>
+
+            <p class="auth-switch">
+                Аккаунтуңуз барбы?
+                <a href="/login">Кирүү</a>
+            </p>
+
+            <a href="/" class="back-link">← Башкы бетке кайтуу</a>
+        </section>
+    </main>
+
+    <script src="/assets/auth.js"></script>
+</body>
+</html>

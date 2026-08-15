@@ -234,6 +234,19 @@ def create_access_token(
         algorithm=JWT_ALGORITHM,
     )
 
+def set_auth_cookie(
+    response: Response,
+    access_token: str,
+) -> None:
+    response.set_cookie(
+        key="quran_access_token",
+        value=access_token,
+        max_age=JWT_EXPIRE_MINUTES * 60,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
 
 def authenticate_user(
     phone_number: str,
@@ -348,6 +361,19 @@ def get_current_user(
 def home() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "index.html")
 
+@app.get("/login", include_in_schema=False)
+def login_page() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "login.html")
+
+
+@app.get("/register", include_in_schema=False)
+def register_page() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "register.html")
+
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard_page() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -362,6 +388,7 @@ def health() -> dict[str, str]:
     status_code=status.HTTP_201_CREATED,
 )
 def register_user(
+    response: Response,
     user_data: UserAccountCreate,
 ) -> TokenResponse:
     normalized_phone = normalize_phone_number(
@@ -415,6 +442,11 @@ def register_user(
         user_id=user_id
     )
 
+    set_auth_cookie(
+        response=response,
+        access_token=access_token,
+    )
+
     return TokenResponse(
         access_token=access_token
     )
@@ -425,6 +457,7 @@ def register_user(
     response_model=TokenResponse,
 )
 def login_user(
+    response: Response,
     login_data: UserLogin,
 ) -> TokenResponse:
     user = authenticate_user(
@@ -441,6 +474,11 @@ def login_user(
 
     access_token = create_access_token(
         user_id=user["id"]
+    )
+
+    set_auth_cookie(
+        response=response,
+        access_token=access_token,
     )
 
     return TokenResponse(
