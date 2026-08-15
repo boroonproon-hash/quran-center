@@ -6,11 +6,13 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+import csv
+import io
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -234,7 +236,80 @@ def get_registrations(
         "items": registrations,
     }
 
+@app.get("/api/registrations/export")
+def export_registrations(
+    admin_username: str = Depends(require_admin),
+) -> StreamingResponse:
+    try:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            connection.row_factory = sqlite3.Row
 
+            rows = connection.execute(
+                """
+                SELECT
+                    id,
+                    student_name,
+                    phone_number,
+                    course_name,
+                    study_format,
+                    status,
+                    created_at
+                FROM registrations
+                ORDER BY id DESC
+                """
+            ).fetchall()
+
+    except sqlite3.Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail="Экспорттоодо ката чыкты.",
+        ) from error
+
+    csv_file = io.StringIO()
+
+    csv_file.write("\ufeff")
+
+    writer = csv.writer(
+        csv_file,
+        delimiter=";",
+        lineterminator="\n",
+)
+
+    writer.writerow(
+        [
+            "№",
+            "Аты-жөнү",
+            "Телефон",
+            "Курс",
+            "Формат",
+            "Статус",
+            "Катталган убакыт",
+        ]
+    )
+
+    for row in rows:
+        writer.writerow(
+            [
+                row["id"],
+                row["student_name"],
+                row["phone_number"],
+                row["course_name"],
+                row["study_format"],
+                row["status"],
+                row["created_at"],
+            ]
+        )
+
+    response = StreamingResponse(
+        iter([csv_file.getvalue()]),
+        media_type="text/csv; charset=utf-8",
+    )
+
+    response.headers["Content-Disposition"] = (
+        'attachment; filename="quran-center-registrations.csv"'
+    )
+
+    return response
 @app.patch("/api/registrations/{registration_id}")
 def update_registration_status(
     registration_id: int,

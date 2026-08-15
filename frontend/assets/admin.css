@@ -336,4 +336,35 @@ tr[hidden] {
     .table-filters select {
         width: 100%;
     }
+}/* Админ панелдин аракет баскычтары */
+
+.page-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.export-button {
+    padding: 12px 18px;
+    border: 1px solid #174b3a;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #174b3a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.export-button:hover {
+    background-color: #eef4f0;
+}
+
+@media (max-width: 700px) {
+    .page-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .export-button {
+        text-align: center;
+    }
 }
