@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Кирүү — Quran Center</title>
+
+    <link rel="stylesheet" href="/assets/auth.css">
+</head>
+
+<body>
+    <main class="auth-page">
+        <section class="auth-card">
+            <a href="/" class="auth-logo">
+                <span class="logo-icon">ق</span>
+
+                <span>
+                    <strong>QURAN CENTER</strong>
+                    <small>Куран үйрөнүү борбору</small>
+                </span>
+            </a>
+
+            <div class="auth-heading">
+                <p class="eyebrow">ЖЕКЕ КАБИНЕТ</p>
+                <h1>Аккаунтка кирүү</h1>
+                <p>Телефон номериңизди жана сырсөзүңүздү жазыңыз.</p>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <label for="phone-number">Телефон номери</label>
+                <input
+                    id="phone-number"
+                    name="phone_number"
+                    type="tel"
+                    placeholder="+996 700 000 000"
+                    autocomplete="tel"
+                    required
+                >
+
+                <label for="password">Сырсөз</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Сырсөзүңүз"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button id="login-button" type="submit">
+                    Кирүү
+                </button>
+
+                <p id="form-message" class="form-message"></p>
+            </form>
+
+            <p class="auth-switch">
+                Аккаунтуңуз жокпу?
+                <a href="/register">Катталуу</a>
+            </p>
+
+            <a href="/" class="back-link">← Башкы бетке кайтуу</a>
+        </section>
+    </main>
+
+    <script src="/assets/auth.js"></script>
+</body>
+</html>

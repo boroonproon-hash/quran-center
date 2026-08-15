@@ -1,14 +1,29 @@
 import os
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException, status
+import jwt
+from fastapi import (
+    Cookie,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Response,
+    status,
+)
 from fastapi.responses import FileResponse, StreamingResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBasic,
+    HTTPBasicCredentials,
+    HTTPBearer,
+)
 from fastapi.staticfiles import StaticFiles
+from jwt.exceptions import InvalidTokenError
+from pwdlib import PasswordHash
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 import csv
@@ -32,6 +47,22 @@ ADMIN_PASSWORD = os.getenv(
 )
 
 admin_security = HTTPBasic()
+user_security = HTTPBearer(auto_error=False)
+JWT_SECRET = os.getenv("QURAN_JWT_SECRET")
+
+if not JWT_SECRET:
+    raise RuntimeError(
+        "QURAN_JWT_SECRET .env файлында көрсөтүлгөн эмес."
+    )
+
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = 60 * 24 * 7
+
+password_hash = PasswordHash.recommended()
+
+DUMMY_PASSWORD_HASH = password_hash.hash(
+    "quran-center-dummy-password"
+)
 
 
 app = FastAPI(
@@ -70,6 +101,38 @@ class RegistrationStatusUpdate(BaseModel):
         "Окууга кабыл алынды",
     ]
 
+class UserAccountCreate(BaseModel):
+    full_name: str = Field(
+        min_length=3,
+        max_length=100,
+    )
+
+    phone_number: str = Field(
+        min_length=9,
+        max_length=30,
+    )
+
+    password: str = Field(
+        min_length=8,
+        max_length=128,
+    )
+
+
+class UserLogin(BaseModel):
+    phone_number: str = Field(
+        min_length=9,
+        max_length=30,
+    )
+
+    password: str = Field(
+        min_length=8,
+        max_length=128,
+    )
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
 
 def create_database() -> None:
     with sqlite3.connect(DATABASE_PATH) as connection:
@@ -102,6 +165,18 @@ def create_database() -> None:
                 """
             )
 
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                phone_number TEXT NOT NULL UNIQUE,
+                hashed_password TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+
         connection.commit()
 
 
@@ -130,6 +205,144 @@ def require_admin(
 
     return credentials.username
 
+def normalize_phone_number(
+    phone_number: str,
+) -> str:
+    return "".join(
+        character
+        for character in phone_number.strip()
+        if character.isdigit() or character == "+"
+    )
+
+
+def create_access_token(
+    user_id: int,
+) -> str:
+    expires_at = (
+        datetime.now(timezone.utc)
+        + timedelta(minutes=JWT_EXPIRE_MINUTES)
+    )
+
+    token_data = {
+        "sub": str(user_id),
+        "exp": expires_at,
+    }
+
+    return jwt.encode(
+        token_data,
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM,
+    )
+
+
+def authenticate_user(
+    phone_number: str,
+    password: str,
+) -> dict | None:
+    normalized_phone = normalize_phone_number(
+        phone_number
+    )
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+
+        user = connection.execute(
+            """
+            SELECT
+                id,
+                full_name,
+                phone_number,
+                hashed_password,
+                created_at
+            FROM users
+            WHERE phone_number = ?
+            """,
+            (normalized_phone,),
+        ).fetchone()
+
+    if user is None:
+        password_hash.verify(
+            password,
+            DUMMY_PASSWORD_HASH,
+        )
+
+        return None
+
+    if not password_hash.verify(
+        password,
+        user["hashed_password"],
+    ):
+        return None
+
+    return {
+        "id": user["id"],
+        "full_name": user["full_name"],
+        "phone_number": user["phone_number"],
+        "created_at": user["created_at"],
+    }
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
+        user_security
+    ),
+    cookie_token: str | None = Cookie(
+        default=None,
+        alias="quran_access_token",
+    ),
+) -> dict:
+    unauthorized_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Кирүү мөөнөтү бүттү же токен туура эмес.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    access_token = (
+        credentials.credentials
+        if credentials is not None
+        else cookie_token
+    )
+
+    if access_token is None:
+        raise unauthorized_error
+    try:
+        payload = jwt.decode(
+            access_token,
+            JWT_SECRET,
+            algorithms=[JWT_ALGORITHM],
+        )
+
+        user_id = int(payload.get("sub"))
+
+    except (
+        InvalidTokenError,
+        TypeError,
+        ValueError,
+    ) as error:
+        raise unauthorized_error from error
+
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+
+        user = connection.execute(
+            """
+            SELECT
+                id,
+                full_name,
+                phone_number,
+                created_at
+            FROM users
+            WHERE id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+
+    if user is None:
+        raise unauthorized_error
+
+    return {
+        "id": user["id"],
+        "full_name": user["full_name"],
+        "phone_number": user["phone_number"],
+        "created_at": user["created_at"],
+    }
 
 @app.get("/")
 def home() -> FileResponse:
@@ -143,6 +356,113 @@ def health() -> dict[str, str]:
         "database": "connected",
     }
 
+@app.post(
+    "/api/auth/register",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_user(
+    user_data: UserAccountCreate,
+) -> TokenResponse:
+    normalized_phone = normalize_phone_number(
+        user_data.phone_number
+    )
+
+    if len(normalized_phone) < 9:
+        raise HTTPException(
+            status_code=422,
+            detail="Телефон номери туура эмес.",
+        )
+
+    hashed_password = password_hash.hash(
+        user_data.password
+    )
+
+    created_at = datetime.now(
+        timezone.utc
+    ).isoformat()
+
+    try:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO users (
+                    full_name,
+                    phone_number,
+                    hashed_password,
+                    created_at
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    user_data.full_name.strip(),
+                    normalized_phone,
+                    hashed_password,
+                    created_at,
+                ),
+            )
+
+            connection.commit()
+            user_id = cursor.lastrowid
+
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(
+            status_code=409,
+            detail="Бул телефон номери менен аккаунт бар.",
+        ) from error
+
+    access_token = create_access_token(
+        user_id=user_id
+    )
+
+    return TokenResponse(
+        access_token=access_token
+    )
+
+
+@app.post(
+    "/api/auth/login",
+    response_model=TokenResponse,
+)
+def login_user(
+    login_data: UserLogin,
+) -> TokenResponse:
+    user = authenticate_user(
+        phone_number=login_data.phone_number,
+        password=login_data.password,
+    )
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Телефон номери же сырсөз туура эмес.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        user_id=user["id"]
+    )
+
+    return TokenResponse(
+        access_token=access_token
+    )
+
+@app.post("/api/auth/logout")
+def logout_user(response: Response) -> dict[str, str]:
+    response.delete_cookie(
+        key="quran_access_token",
+        path="/",
+    )
+
+    return {
+        "message": "Аккаунттан ийгиликтүү чыктыңыз."
+    }
+
+@app.get("/api/auth/me")
+def get_my_profile(
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    return current_user
 
 @app.post(
     "/api/registrations",
