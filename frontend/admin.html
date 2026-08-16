@@ -149,6 +149,23 @@
                 </div>
                 <div class="empty-message" id="coursesEmptyMessage">Азырынча курс жок.</div>
             </section>
+
+            <section class="table-card lessons-manager" id="lessonsManager" hidden>
+                <div class="table-heading">
+                    <div>
+                        <h2 id="lessonsHeading">Сабактар</h2>
+                        <p id="lessonsLoadingText">Курсту тандаңыз.</p>
+                    </div>
+                    <button type="button" class="primary-button" id="newLessonButton">Жаңы сабак</button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="lessons-table">
+                        <thead><tr><th>Ирет</th><th>Сабак</th><th>Видео</th><th>Preview</th><th>Абалы</th><th>Аракеттер</th></tr></thead>
+                        <tbody id="lessonsTable"></tbody>
+                    </table>
+                </div>
+                <div class="empty-message" id="lessonsEmptyMessage">Азырынча сабак жок.</div>
+            </section>
         </section>
 
     </div>
@@ -180,6 +197,33 @@
             <div class="modal-actions">
                 <button type="button" class="secondary-button" data-close-modal>Жокко чыгаруу</button>
                 <button type="submit" class="primary-button" id="saveCourseButton">Сактоо</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="modal" id="lessonModal" hidden>
+    <div class="modal-backdrop" data-close-lesson-modal></div>
+    <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="lessonModalTitle">
+        <div class="modal-header">
+            <h2 id="lessonModalTitle">Жаңы сабак</h2>
+            <button type="button" class="modal-close" data-close-lesson-modal aria-label="Жабуу">×</button>
+        </div>
+        <form id="lessonForm">
+            <input type="hidden" id="lessonId">
+            <div class="form-grid">
+                <label class="full-field">Аталышы<input id="lessonTitle" required minlength="2" maxlength="200"></label>
+                <label class="full-field">Сүрөттөмө<textarea id="lessonDescription" maxlength="5000" rows="5"></textarea></label>
+                <label class="full-field">YouTube видео URL<input id="lessonVideoUrl" type="url" maxlength="1000" placeholder="https://www.youtube.com/watch?v=..."></label>
+                <label>Материал URL<input id="lessonMaterialUrl" type="url" maxlength="1000"></label>
+                <label>Сабактын ирети<input id="lessonPosition" type="number" min="0" value="0" required></label>
+                <label class="checkbox-field"><input id="lessonFreePreview" type="checkbox"> Акысыз preview</label>
+                <label class="checkbox-field"><input id="lessonPublished" type="checkbox" checked> Жарыяланган</label>
+            </div>
+            <p class="form-feedback" id="lessonFormMessage" role="status"></p>
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" data-close-lesson-modal>Жокко чыгаруу</button>
+                <button type="submit" class="primary-button" id="saveLessonButton">Сактоо</button>
             </div>
         </form>
     </section>

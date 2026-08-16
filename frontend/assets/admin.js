@@ -239,6 +239,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
+    function getAdminBasicAuthHeader() {
+        try {
+            const currentUrl = new URL(window.location.href);
+            const username = currentUrl.username;
+            const password = currentUrl.password;
+            if (!username || !password) {
+                return {};
+            }
+            const token = btoa(`${username}:${password}`);
+            return {
+                Authorization: `Basic ${token}`,
+            };
+        } catch (error) {
+            console.error("Admin auth header creation failed.", error);
+            return {};
+        }
+    }
+
+    function buildApiUrl(path) {
+        return new URL(path, window.location.origin).toString();
+    }
+
     async function loadRegistrations() {
         refreshButton.disabled = true;
         loadingText.textContent =
@@ -248,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             const response = await fetch(
-                "/api/registrations"
+                buildApiUrl("/api/registrations")
             );
 
             if (!response.ok) {
@@ -323,7 +345,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const courseModal = document.getElementById("courseModal");
     const courseForm = document.getElementById("courseForm");
     const courseFormMessage = document.getElementById("courseFormMessage");
+    const lessonsTable = document.getElementById("lessonsTable");
+    const lessonsLoadingText = document.getElementById("lessonsLoadingText");
+    const lessonsEmptyMessage = document.getElementById("lessonsEmptyMessage");
+    const lessonsManager = document.getElementById("lessonsManager");
+    const lessonsHeading = document.getElementById("lessonsHeading");
+    const lessonModal = document.getElementById("lessonModal");
+    const lessonForm = document.getElementById("lessonForm");
+    const lessonFormMessage = document.getElementById("lessonFormMessage");
     let courses = [];
+    let lessons = [];
+    let currentCourse = null;
 
     tabs.forEach(function (tab) {
         tab.addEventListener("click", function () {
@@ -360,7 +392,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     document.getElementById("newCourseButton").addEventListener("click", () => openCourseModal(null));
+    document.getElementById("newLessonButton").addEventListener("click", () => {
+        if (!currentCourse) return;
+        openLessonModal(null);
+    });
     document.querySelectorAll("[data-close-modal]").forEach(button => button.addEventListener("click", closeCourseModal));
+    document.querySelectorAll("[data-close-lesson-modal]").forEach(button => button.addEventListener("click", closeLessonModal));
 
     function actionButton(label, className, handler) {
         const button = document.createElement("button");
@@ -397,6 +434,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const actionWrap = document.createElement("div");
             actionWrap.className = "row-actions";
             actionWrap.append(
+                actionButton("Сабактар", "", () => openLessons(course)),
                 actionButton("Өзгөртүү", "", () => openCourseModal(course)),
                 actionButton(course.is_published ? "Жашыруу" : "Жарыялоо", "", () => togglePublish(course)),
                 actionButton("Өчүрүү", "danger", () => deleteCourse(course))
@@ -408,8 +446,137 @@ document.addEventListener("DOMContentLoaded", function () {
         coursesLoadingText.textContent = `${courses.length} курс көрсөтүлдү`;
     }
 
-    async function apiRequest(url, options) {
-        const response = await fetch(url, options);
+    function closeLessonModal() {
+        lessonModal.hidden = true;
+        document.body.classList.remove("modal-open");
+    }
+
+    function openLessonModal(lesson) {
+        lessonForm.reset();
+        lessonFormMessage.textContent = "";
+        document.getElementById("lessonModalTitle").textContent = lesson ? "Сабакты өзгөртүү" : "Жаңы сабак";
+        document.getElementById("lessonId").value = lesson ? lesson.id : "";
+        document.getElementById("lessonTitle").value = lesson ? lesson.title : "";
+        document.getElementById("lessonDescription").value = lesson ? lesson.description : "";
+        document.getElementById("lessonVideoUrl").value = lesson ? lesson.video_url : "";
+        document.getElementById("lessonMaterialUrl").value = lesson ? lesson.material_url : "";
+        document.getElementById("lessonPosition").value = lesson ? lesson.position : 0;
+        document.getElementById("lessonFreePreview").checked = lesson ? lesson.is_free_preview : false;
+        document.getElementById("lessonPublished").checked = lesson ? lesson.is_published : true;
+        lessonModal.hidden = false;
+        document.body.classList.add("modal-open");
+        document.getElementById("lessonTitle").focus();
+    }
+
+    async function loadLessons(course) {
+        if (!course) return;
+
+        currentCourse = course;
+        lessonsLoadingText.textContent = "Сабактар жүктөлүүдө...";
+        lessonsEmptyMessage.style.display = "none";
+        lessonsManager.hidden = false;
+        lessonsHeading.textContent = `${course.title} — сабактар`;
+
+        try {
+            lessons = await apiRequest(`/api/admin/courses/${course.id}/lessons`);
+            renderLessons();
+        } catch (error) {
+            lessonsLoadingText.textContent = "Сабактарды жүктөөдө ката чыкты.";
+            console.error(error);
+        }
+    }
+
+    function renderLessons() {
+        lessonsTable.textContent = "";
+        lessonsEmptyMessage.style.display = lessons.length ? "none" : "block";
+
+        lessons.forEach(function (lesson) {
+            const row = document.createElement("tr");
+            row.appendChild(createCell(lesson.position));
+
+            const titleCell = document.createElement("td");
+            titleCell.textContent = lesson.title;
+            row.appendChild(titleCell);
+
+            const videoCell = document.createElement("td");
+            videoCell.textContent = lesson.video_url ? "Жок" : "—";
+            if (lesson.video_url) {
+                const link = document.createElement("a");
+                link.href = lesson.video_url;
+                link.target = "_blank";
+                link.rel = "noreferrer";
+                link.textContent = "Видео";
+                videoCell.textContent = "";
+                videoCell.appendChild(link);
+            }
+            row.appendChild(videoCell);
+
+            const previewCell = document.createElement("td");
+            previewCell.textContent = lesson.is_free_preview ? "Ооба" : "Жок";
+            row.appendChild(previewCell);
+
+            const stateCell = document.createElement("td");
+            const state = document.createElement("span");
+            state.className = `publish-badge ${lesson.is_published ? "published" : ""}`;
+            state.textContent = lesson.is_published ? "Жарыяланган" : "Жашырылган";
+            stateCell.appendChild(state);
+            row.appendChild(stateCell);
+
+            const actions = document.createElement("td");
+            const actionWrap = document.createElement("div");
+            actionWrap.className = "row-actions";
+            actionWrap.append(
+                actionButton("Өзгөртүү", "", () => openLessonModal(lesson)),
+                actionButton(lesson.is_published ? "Жашыруу" : "Жарыялоо", "", () => toggleLessonPublish(lesson)),
+                actionButton("Өчүрүү", "danger", () => deleteLesson(lesson))
+            );
+            actions.appendChild(actionWrap);
+            row.appendChild(actions);
+            lessonsTable.appendChild(row);
+        });
+
+        lessonsLoadingText.textContent = `${lessons.length} сабақ көрсөтүлдү`;
+    }
+
+    function openLessons(course) {
+        loadLessons(course);
+    }
+
+    async function toggleLessonPublish(lesson) {
+        try {
+            await apiRequest(`/api/admin/lessons/${lesson.id}/publish`, {
+                method: "PATCH",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({is_published: !lesson.is_published})
+            });
+            await loadLessons(currentCourse);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function deleteLesson(lesson) {
+        if (!confirm(`“${lesson.title}” сабағын өчүрөсүзбү?`)) return;
+        try {
+            await apiRequest(`/api/admin/lessons/${lesson.id}`, {method: "DELETE"});
+            await loadLessons(currentCourse);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function apiRequest(url, options = {}) {
+        const requestUrl = buildApiUrl(url);
+        const headers = {
+            ...(options.headers || {}),
+            ...(url.startsWith("/api/admin/") ? getAdminBasicAuthHeader() : {}),
+        };
+
+        const response = await fetch(requestUrl, {
+            ...options,
+            headers,
+        });
+
         if (!response.ok) {
             let message = "Сурам аткарылган жок.";
             try { message = (await response.json()).detail || message; } catch (_) {}
@@ -474,5 +641,48 @@ document.addEventListener("DOMContentLoaded", function () {
             await loadCourses();
         } catch (error) { courseFormMessage.textContent = error.message; }
         finally { saveButton.disabled = false; }
+    });
+
+    lessonForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        if (!currentCourse) return;
+
+        const id = document.getElementById("lessonId").value;
+        const payload = {
+            title: document.getElementById("lessonTitle").value.trim(),
+            description: document.getElementById("lessonDescription").value.trim(),
+            video_url: document.getElementById("lessonVideoUrl").value.trim(),
+            material_url: document.getElementById("lessonMaterialUrl").value.trim(),
+            position: Number(document.getElementById("lessonPosition").value),
+            is_free_preview: document.getElementById("lessonFreePreview").checked,
+            is_published: document.getElementById("lessonPublished").checked
+        };
+
+        const saveButton = document.getElementById("saveLessonButton");
+        saveButton.disabled = true;
+        lessonFormMessage.textContent = "";
+
+        try {
+            if (id) {
+                await apiRequest(`/api/admin/lessons/${id}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await apiRequest(`/api/admin/courses/${currentCourse.id}/lessons`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            closeLessonModal();
+            await loadLessons(currentCourse);
+        } catch (error) {
+            lessonFormMessage.textContent = error.message;
+        } finally {
+            saveButton.disabled = false;
+        }
     });
 });

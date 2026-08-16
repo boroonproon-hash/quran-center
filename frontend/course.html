@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ky">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Курс | Quran Center</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+    <style>
+        body { background: #f4f6f4; color: #173d32; }
+        .course-page-header { padding: 32px 0 18px; }
+        .course-shell { display: grid; grid-template-columns: 380px 1fr; gap: 26px; max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; }
+        .course-card-detail, .lessons-panel, .lesson-detail-panel { background: #fff; border: 1px solid #e0e5e2; border-radius: 18px; box-shadow: 0 10px 28px rgba(8, 30, 23, 0.05); }
+        .course-card-detail { padding: 28px; }
+        .course-icon-large { width: 64px; height: 64px; border-radius: 16px; background: #174b3a; color: #dcb969; display: grid; place-items: center; font-size: 32px; font-family: Georgia, serif; }
+        .course-level-badge { display: inline-block; margin: 18px 0 12px; padding: 7px 12px; border-radius: 999px; background: #ebf4ee; color: #176234; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+        .course-card-detail h1 { font-size: clamp(32px, 5vw, 44px); margin-bottom: 12px; }
+        .course-card-detail p { color: #53675f; line-height: 1.7; }
+        .course-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+        .meta-pill { padding: 8px 12px; border-radius: 999px; background: #f5f7f5; color: #405249; font-size: 12px; font-weight: 700; }
+        .lessons-panel { padding: 22px; }
+        .lesson-list { display: grid; gap: 12px; margin-top: 18px; }
+        .lesson-item { width: 100%; text-align: left; border: 1px solid #dfe5e1; border-radius: 12px; background: #fff; padding: 14px 16px; cursor: pointer; }
+        .lesson-item.active { border-color: #b78d38; background: #fffaf0; }
+        .lesson-item strong { display: block; margin-bottom: 5px; }
+        .lesson-item small { color: #718078; }
+        .lesson-detail-panel { padding: 28px; min-height: 300px; }
+        .lesson-detail-panel h2 { font-size: clamp(22px, 3vw, 30px); margin-bottom: 12px; }
+        .lesson-detail-panel .empty { color: #718078; }
+        .lesson-video { margin-top: 18px; border-radius: 12px; overflow: hidden; background: #111; }
+        .lesson-video iframe { width: 100%; min-height: 280px; border: 0; display: block; }
+        .course-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+        .button { display: inline-block; padding: 12px 18px; border-radius: 10px; border: 1px solid #174b3a; font-weight: 700; }
+        .button-primary { background: #174b3a; color: #fff; }
+        .button-secondary { background: #fff; color: #174b3a; }
+        @media (max-width: 900px) { .course-shell { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header class="header course-page-header">
+        <div class="container header-inner">
+            <a href="/" class="logo">
+                <span class="logo-icon">ق</span>
+                <span>
+                    <strong>QURAN CENTER</strong>
+                    <small>Куран үйрөнүү борбору</small>
+                </span>
+            </a>
+            <div class="header-actions">
+                <a href="/" class="header-button">Башкы бет</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="course-shell">
+            <aside id="courseDetail" class="course-card-detail"></aside>
+
+            <section class="lessons-panel">
+                <div class="section-heading" style="margin-bottom: 0;">
+                    <p class="section-label">САБАКТАР</p>
+                    <h2>Курс сабактары</h2>
+                </div>
+                <div id="lessonsList" class="lesson-list"></div>
+            </section>
+
+            <div id="lessonDetail" class="lesson-detail-panel" style="grid-column: 1 / -1;"></div>
+        </div>
+    </main>
+
+    <script src="/assets/course.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 import jwt
 from fastapi import (
@@ -25,7 +26,7 @@ from fastapi.security import (
 from fastapi.staticfiles import StaticFiles
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
 
 
@@ -171,6 +172,48 @@ class Course(CourseBase):
     updated_at: datetime
 
 
+class LessonBase(BaseModel):
+    title: str = Field(min_length=2, max_length=200)
+    description: str = Field(default="", max_length=5000)
+    video_url: str = Field(default="", max_length=1000)
+    material_url: str = Field(default="", max_length=1000)
+    position: int = Field(default=0, ge=0)
+    is_free_preview: bool = False
+    is_published: bool = True
+
+    @field_validator("video_url")
+    @classmethod
+    def validate_youtube_url(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            return value
+        parsed = urlparse(value)
+        host = (parsed.hostname or "").lower()
+        allowed_hosts = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "youtube-nocookie.com", "www.youtube-nocookie.com"}
+        if parsed.scheme not in {"http", "https"} or host not in allowed_hosts:
+            raise ValueError("video_url YouTube шилтемеси болушу керек")
+        return value
+
+
+class LessonCreate(LessonBase):
+    pass
+
+
+class LessonUpdate(LessonBase):
+    pass
+
+
+class LessonPublishUpdate(BaseModel):
+    is_published: bool
+
+
+class Lesson(LessonBase):
+    id: int
+    course_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
 INITIAL_COURSES = [
     ("Куран алиппеси", "kuran-alippesi", "Араб тамгаларын, үндөрдү жана Куран окуунун алгачкы эрежелерин үйрөнөсүз.", "Араб тамгаларын таанып, туура айтуудан баштап Куран окууга даярдоочу толук башталгыч программа.", "БАШТАЛГЫЧ", "", "", "", "ا", 1, True),
     ("Куран окуу", "kuran-okuu", "Аяттарды өз алдынча, ишенимдүү жана туура окууга кадам сайын үйрөнөсүз.", "Куранды эркин жана туура окуу көндүмүн системалуу өнүктүрүүчү негизги курс.", "НЕГИЗГИ КУРС", "", "", "", "ق", 2, True),
@@ -228,6 +271,27 @@ def create_database() -> None:
                 updated_at TEXT NOT NULL
             )
             """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS lessons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                course_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                video_url TEXT NOT NULL DEFAULT '',
+                material_url TEXT NOT NULL DEFAULT '',
+                position INTEGER NOT NULL DEFAULT 0,
+                is_free_preview INTEGER NOT NULL DEFAULT 0,
+                is_published INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_lessons_course_position ON lessons(course_id, position, id)"
         )
         if connection.execute("SELECT COUNT(*) FROM courses").fetchone()[0] == 0:
             now = datetime.now(timezone.utc).isoformat()
@@ -422,6 +486,11 @@ def get_current_user(
 @app.get("/")
 def home() -> FileResponse:
     return FileResponse(FRONTEND_DIR / "index.html")
+
+
+@app.get("/courses/{course_id}", include_in_schema=False)
+def course_page(course_id: int) -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "course.html")
 
 @app.get("/login", include_in_schema=False)
 def login_page() -> FileResponse:
@@ -890,10 +959,140 @@ def publish_course(course_id: int, update: CoursePublishUpdate, admin_username: 
 @app.delete("/api/admin/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_course(course_id: int, admin_username: str = Depends(require_admin)) -> Response:
     with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
         cursor = connection.execute("DELETE FROM courses WHERE id = ?", (course_id,))
         connection.commit()
     if cursor.rowcount == 0:
         raise HTTPException(status_code=404, detail="Курс табылган жок.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+LESSON_COLUMNS = """
+    id, course_id, title, description, video_url, material_url,
+    position, is_free_preview, is_published, created_at, updated_at
+"""
+
+
+def lesson_from_row(row: sqlite3.Row, public: bool = False) -> dict:
+    lesson = dict(row)
+    lesson["is_free_preview"] = bool(lesson["is_free_preview"])
+    lesson["is_published"] = bool(lesson["is_published"])
+    if public and not lesson["is_free_preview"]:
+        lesson["video_url"] = ""
+        lesson["material_url"] = ""
+    return lesson
+
+
+def get_lesson_or_404(lesson_id: int, published_only: bool = False) -> dict:
+    published_filter = " AND lessons.is_published = 1 AND courses.is_published = 1" if published_only else ""
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            f"""
+            SELECT
+                lessons.id, lessons.course_id, lessons.title, lessons.description,
+                lessons.video_url, lessons.material_url, lessons.position,
+                lessons.is_free_preview, lessons.is_published,
+                lessons.created_at, lessons.updated_at
+            FROM lessons JOIN courses ON courses.id = lessons.course_id
+            WHERE lessons.id = ?{published_filter}
+            """,
+            (lesson_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Сабак табылган жок.")
+    return lesson_from_row(row, public=published_only)
+
+
+@app.get("/api/courses/{course_id}/lessons", response_model=list[Lesson])
+def get_published_lessons(course_id: int) -> list[dict]:
+    get_course_or_404(course_id, published_only=True)
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            f"SELECT {LESSON_COLUMNS} FROM lessons WHERE course_id = ? AND is_published = 1 ORDER BY position, id",
+            (course_id,),
+        ).fetchall()
+    return [lesson_from_row(row, public=True) for row in rows]
+
+
+@app.get("/api/lessons/{lesson_id}", response_model=Lesson)
+def get_published_lesson(lesson_id: int) -> dict:
+    return get_lesson_or_404(lesson_id, published_only=True)
+
+
+@app.get("/api/admin/courses/{course_id}/lessons", response_model=list[Lesson])
+def get_admin_lessons(course_id: int, admin_username: str = Depends(require_admin)) -> list[dict]:
+    get_course_or_404(course_id)
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            f"SELECT {LESSON_COLUMNS} FROM lessons WHERE course_id = ? ORDER BY position, id",
+            (course_id,),
+        ).fetchall()
+    return [lesson_from_row(row) for row in rows]
+
+
+@app.post("/api/admin/courses/{course_id}/lessons", response_model=Lesson, status_code=status.HTTP_201_CREATED)
+def create_lesson(course_id: int, lesson: LessonCreate, admin_username: str = Depends(require_admin)) -> dict:
+    get_course_or_404(course_id)
+    now = datetime.now(timezone.utc).isoformat()
+    values = lesson.model_dump()
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute("PRAGMA foreign_keys = ON")
+        cursor = connection.execute(
+            """
+            INSERT INTO lessons (
+                course_id, title, description, video_url, material_url,
+                position, is_free_preview, is_published, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (course_id, *values.values(), now, now),
+        )
+        connection.commit()
+        lesson_id = cursor.lastrowid
+    return get_lesson_or_404(lesson_id)
+
+
+@app.put("/api/admin/lessons/{lesson_id}", response_model=Lesson)
+def update_lesson(lesson_id: int, lesson: LessonUpdate, admin_username: str = Depends(require_admin)) -> dict:
+    values = lesson.model_dump()
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.execute(
+            """
+            UPDATE lessons SET
+                title = ?, description = ?, video_url = ?, material_url = ?,
+                position = ?, is_free_preview = ?, is_published = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (*values.values(), datetime.now(timezone.utc).isoformat(), lesson_id),
+        )
+        connection.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Сабак табылган жок.")
+    return get_lesson_or_404(lesson_id)
+
+
+@app.patch("/api/admin/lessons/{lesson_id}/publish", response_model=Lesson)
+def publish_lesson(lesson_id: int, update: LessonPublishUpdate, admin_username: str = Depends(require_admin)) -> dict:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.execute(
+            "UPDATE lessons SET is_published = ?, updated_at = ? WHERE id = ?",
+            (update.is_published, datetime.now(timezone.utc).isoformat(), lesson_id),
+        )
+        connection.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Сабак табылган жок.")
+    return get_lesson_or_404(lesson_id)
+
+
+@app.delete("/api/admin/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_lesson(lesson_id: int, admin_username: str = Depends(require_admin)) -> Response:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.execute("DELETE FROM lessons WHERE id = ?", (lesson_id,))
+        connection.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Сабак табылган жок.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

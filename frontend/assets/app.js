@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const description = document.createElement("p");
         description.textContent = course.short_description;
         const link = document.createElement("a");
-        link.href = "#register";
+        link.href = `/courses/${course.id}`;
         link.textContent = "Толук маалымат ";
         const arrow = document.createElement("span");
         arrow.textContent = "→";
