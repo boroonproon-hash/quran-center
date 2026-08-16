@@ -86,19 +86,25 @@ app.mount(
 
 
 class RegistrationCreate(BaseModel):
-    student_name: str = Field(min_length=3, max_length=100)
-    phone_number: str = Field(min_length=9, max_length=30)
+    student_name: str = Field(
+        min_length=2,
+        max_length=100,
+    )
 
-    course_name: Literal[
-        "ÐšÑƒÑ€Ð°Ð½ Ð°Ð»Ð¸Ð¿Ð¿ÐµÑÐ¸",
-        "ÐšÑƒÑ€Ð°Ð½ Ð¾ÐºÑƒÑƒ",
-        "Ð¢Ð°Ð¶Ð²Ð¸Ð´",
-        "Ð¥Ð¸Ñ„Ð·",
-        "Ð‘Ð°Ð»Ð´Ð°Ñ€ ÐºÑƒÑ€ÑÑƒ",
-        "Ð§Ð¾Ò£Ð´Ð¾Ñ€ ÐºÑƒÑ€ÑÑƒ",
-    ]
+    phone_number: str = Field(
+        min_length=9,
+        max_length=30,
+    )
 
-    study_format: Literal["ÐžÐ½Ð»Ð°Ð¹Ð½", "ÐžÑ„Ð»Ð°Ð¹Ð½"]
+    course_name: str = Field(
+        min_length=2,
+        max_length=100,
+    )
+
+    study_format: str = Field(
+        min_length=2,
+        max_length=30,
+    )
 
 class RegistrationStatusUpdate(BaseModel):
     status: Literal[
