@@ -1,4 +1,68 @@
 document.addEventListener("DOMContentLoaded", function () {
+    const coursesGrid = document.getElementById("coursesGrid");
+
+    function createCourseCard(course, index) {
+        const card = document.createElement("article");
+        card.className = "course-card";
+        if (index === 1) card.classList.add("featured-course");
+
+        if (course.image_url) {
+            const image = document.createElement("img");
+            image.className = "course-image";
+            image.src = course.image_url;
+            image.alt = course.title;
+            image.loading = "lazy";
+            card.appendChild(image);
+        } else {
+            const icon = document.createElement("div");
+            icon.className = "course-icon";
+            icon.textContent = course.icon || "ق";
+            card.appendChild(icon);
+        }
+
+        const level = document.createElement("p");
+        level.className = "course-level";
+        level.textContent = course.level;
+        const title = document.createElement("h3");
+        title.textContent = course.title;
+        const description = document.createElement("p");
+        description.textContent = course.short_description;
+        const link = document.createElement("a");
+        link.href = "#register";
+        link.textContent = "Толук маалымат ";
+        const arrow = document.createElement("span");
+        arrow.textContent = "→";
+        link.appendChild(arrow);
+        card.append(level, title, description, link);
+        return card;
+    }
+
+    async function loadCourses() {
+        if (!coursesGrid) return;
+        try {
+            const response = await fetch("/api/courses");
+            if (!response.ok) throw new Error("Courses request failed");
+            const courses = await response.json();
+            coursesGrid.textContent = "";
+            courses.forEach((course, index) => coursesGrid.appendChild(createCourseCard(course, index)));
+            if (courses.length === 0) {
+                const message = document.createElement("p");
+                message.className = "courses-message";
+                message.textContent = "Азырынча жарыяланган курс жок.";
+                coursesGrid.appendChild(message);
+            }
+        } catch (error) {
+            coursesGrid.textContent = "";
+            const message = document.createElement("p");
+            message.className = "courses-message error";
+            message.textContent = "Курстарды жүктөө мүмкүн болгон жок";
+            coursesGrid.appendChild(message);
+            console.error(error);
+        }
+    }
+
+    loadCourses();
+
     // Катталуу формасы
 
     const registrationForm =

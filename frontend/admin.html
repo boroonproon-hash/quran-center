@@ -29,6 +29,13 @@
 <main class="admin-main">
     <div class="admin-container">
 
+        <nav class="admin-tabs" aria-label="Башкаруу бөлүмдөрү">
+            <button class="admin-tab active" type="button" data-tab="applicationsPanel">Өтүнмөлөр</button>
+            <button class="admin-tab" type="button" data-tab="coursesPanel">Курстар</button>
+        </nav>
+
+        <section id="applicationsPanel" class="tab-panel active">
+
         <section class="page-heading">
             <div>
                 <p class="eyebrow">БАШКАРУУ ПАНЕЛИ</p>
@@ -115,8 +122,68 @@
             </div>
         </section>
 
+        </section>
+
+        <section id="coursesPanel" class="tab-panel">
+            <div class="page-heading courses-heading">
+                <div>
+                    <p class="eyebrow">КУРСТАРДЫ БАШКАРУУ</p>
+                    <h1>Курстар</h1>
+                    <p>Сайттагы курстарды кошуңуз, өзгөртүңүз жана жарыялаңыз.</p>
+                </div>
+                <button type="button" class="primary-button" id="newCourseButton">Жаңы курс</button>
+            </div>
+
+            <section class="table-card">
+                <div class="table-heading">
+                    <div>
+                        <h2>Курстардын тизмеси</h2>
+                        <p id="coursesLoadingText">Маалымат жүктөлө элек.</p>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="courses-table">
+                        <thead><tr><th>Ирет</th><th>Курс</th><th>Деңгээл</th><th>Узактыгы / баасы</th><th>Абалы</th><th>Аракеттер</th></tr></thead>
+                        <tbody id="coursesTable"></tbody>
+                    </table>
+                </div>
+                <div class="empty-message" id="coursesEmptyMessage">Азырынча курс жок.</div>
+            </section>
+        </section>
+
     </div>
 </main>
+
+<div class="modal" id="courseModal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="courseModalTitle">
+        <div class="modal-header">
+            <h2 id="courseModalTitle">Жаңы курс</h2>
+            <button type="button" class="modal-close" data-close-modal aria-label="Жабуу">×</button>
+        </div>
+        <form id="courseForm">
+            <input type="hidden" id="courseId">
+            <div class="form-grid">
+                <label>Аталышы<input id="courseTitle" required minlength="2" maxlength="150"></label>
+                <label>Slug<input id="courseSlug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="kuran-kursu"></label>
+                <label>Деңгээли<input id="courseLevel" required maxlength="100"></label>
+                <label>Белги (icon)<input id="courseIcon" maxlength="20" value="ق"></label>
+                <label>Узактыгы<input id="courseDuration" maxlength="100"></label>
+                <label>Баасы<input id="coursePrice" maxlength="100"></label>
+                <label>Сүрөт URL<input id="courseImageUrl" type="url" maxlength="1000"></label>
+                <label>Ирети<input id="coursePosition" type="number" min="0" value="0" required></label>
+                <label class="full-field">Кыска маалымат<textarea id="courseShortDescription" required minlength="2" maxlength="500" rows="3"></textarea></label>
+                <label class="full-field">Толук маалымат<textarea id="courseFullDescription" required minlength="2" maxlength="5000" rows="6"></textarea></label>
+                <label class="checkbox-field full-field"><input id="coursePublished" type="checkbox" checked> Жарыяланган</label>
+            </div>
+            <p class="form-feedback" id="courseFormMessage" role="status"></p>
+            <div class="modal-actions">
+                <button type="button" class="secondary-button" data-close-modal>Жокко чыгаруу</button>
+                <button type="submit" class="primary-button" id="saveCourseButton">Сактоо</button>
+            </div>
+        </form>
+    </section>
+</div>
 
 <script src="/assets/admin.js"></script>
 

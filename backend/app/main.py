@@ -1,12 +1,11 @@
 import os
 import secrets
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
 import jwt
-import psycopg
-from psycopg.rows import dict_row
 from fastapi import (
     Cookie,
     Depends,
@@ -35,12 +34,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 
 FRONTEND_DIR = BASE_DIR / "frontend"
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL Ñ‡Ó©Ð¹Ñ€Ó© Ó©Ð·Ð³Ó©Ñ€Ð¼Ó©ÑÒ¯ ÐºÓ©Ñ€ÑÓ©Ñ‚Ò¯Ð»Ð³Ó©Ð½ ÑÐ¼ÐµÑ."
-    )
+DATABASE_PATH = BASE_DIR / "backend" / "quran_center.db"
 
 ADMIN_USERNAME = os.getenv(
     "QURAN_ADMIN_USERNAME",
@@ -145,39 +139,110 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+
+class CourseBase(BaseModel):
+    title: str = Field(min_length=2, max_length=150)
+    slug: str = Field(min_length=2, max_length=150, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    short_description: str = Field(min_length=2, max_length=500)
+    full_description: str = Field(min_length=2, max_length=5000)
+    level: str = Field(min_length=2, max_length=100)
+    duration: str = Field(default="", max_length=100)
+    price: str = Field(default="", max_length=100)
+    image_url: str = Field(default="", max_length=1000)
+    icon: str = Field(default="ق", max_length=20)
+    position: int = Field(default=0, ge=0)
+    is_published: bool = True
+
+
+class CourseCreate(CourseBase):
+    pass
+
+
+class CourseUpdate(CourseBase):
+    pass
+
+
+class CoursePublishUpdate(BaseModel):
+    is_published: bool
+
+
+class Course(CourseBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+INITIAL_COURSES = [
+    ("Куран алиппеси", "kuran-alippesi", "Араб тамгаларын, үндөрдү жана Куран окуунун алгачкы эрежелерин үйрөнөсүз.", "Араб тамгаларын таанып, туура айтуудан баштап Куран окууга даярдоочу толук башталгыч программа.", "БАШТАЛГЫЧ", "", "", "", "ا", 1, True),
+    ("Куран окуу", "kuran-okuu", "Аяттарды өз алдынча, ишенимдүү жана туура окууга кадам сайын үйрөнөсүз.", "Куранды эркин жана туура окуу көндүмүн системалуу өнүктүрүүчү негизги курс.", "НЕГИЗГИ КУРС", "", "", "", "ق", 2, True),
+    ("Тажвид", "tajvid", "Куран окуунун махраждарын жана тажвид эрежелерин системалуу өздөштүрөсүз.", "Туура айтылышты, махраждарды жана негизги тажвид эрежелерин практика менен үйрөтүүчү курс.", "ОРТО ДЕҢГЭЭЛ", "", "", "", "ت", 3, True),
+    ("Хифз", "hifz", "Куран аяттарын туура жаттоо жана кайталоо боюнча жеке программа аласыз.", "Жаттоо, бекемдөө жана үзгүлтүксүз кайталоо ыкмаларын камтыган жеке программа.", "ЖАТТОО", "", "", "", "ح", 4, True),
+    ("Балдар курсу", "baldar-kursu", "Балдарга ылайыкташтырылган кызыктуу жана түшүнүктүү Куран сабактары.", "Балдардын жаш өзгөчөлүгүнө ылайык оюн элементтери менен түзүлгөн Куран сабактары.", "БАЛДАР ҮЧҮН", "", "", "", "ب", 5, True),
+    ("Чоңдор курсу", "chondor-kursu", "Жаш курагына карабай Куран окууну баштоону каалагандар үчүн ыңгайлуу курс.", "Чоңдор үчүн ыңгайлуу темпте нөлдөн баштап Куран окууну үйрөтүүчү программа.", "ЧОҢДОР ҮЧҮН", "", "", "", "ك", 6, True),
+]
+
 def create_database() -> None:
-    with psycopg.connect(DATABASE_URL) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.execute(
             """
             CREATE TABLE IF NOT EXISTS registrations (
-                id BIGSERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 student_name TEXT NOT NULL,
                 phone_number TEXT NOT NULL,
                 course_name TEXT NOT NULL,
                 study_format TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'Ð–Ð°Ò£Ñ‹',
-                created_at TIMESTAMPTZ NOT NULL
+                created_at TEXT NOT NULL
             )
             """
-            )
-            cursor.execute(
-            """
-            ALTER TABLE registrations
-            ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Ð–Ð°Ò£Ñ‹'
-            """
-            )
-            cursor.execute(
+        )
+        columns = {column[1] for column in connection.execute("PRAGMA table_info(registrations)")}
+        if "status" not in columns:
+            connection.execute("ALTER TABLE registrations ADD COLUMN status TEXT NOT NULL DEFAULT 'Жаңы'")
+        connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
-                id BIGSERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT NOT NULL,
                 phone_number TEXT NOT NULL UNIQUE,
                 hashed_password TEXT NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL
+                created_at TEXT NOT NULL
             )
             """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS courses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                slug TEXT NOT NULL UNIQUE,
+                short_description TEXT NOT NULL,
+                full_description TEXT NOT NULL,
+                level TEXT NOT NULL,
+                duration TEXT NOT NULL DEFAULT '',
+                price TEXT NOT NULL DEFAULT '',
+                image_url TEXT NOT NULL DEFAULT '',
+                icon TEXT NOT NULL DEFAULT 'ق',
+                position INTEGER NOT NULL DEFAULT 0,
+                is_published INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
             )
+            """
+        )
+        if connection.execute("SELECT COUNT(*) FROM courses").fetchone()[0] == 0:
+            now = datetime.now(timezone.utc).isoformat()
+            connection.executemany(
+                """
+                INSERT INTO courses (
+                    title, slug, short_description, full_description, level,
+                    duration, price, image_url, icon, position, is_published,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [course + (now, now) for course in INITIAL_COURSES],
+            )
+        connection.commit()
 
 
 create_database()
@@ -256,12 +321,9 @@ def authenticate_user(
         phone_number
     )
 
-    with psycopg.connect(
-        DATABASE_URL,
-        row_factory=dict_row,
-    ) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        user = connection.execute(
             """
             SELECT
                 id,
@@ -270,11 +332,10 @@ def authenticate_user(
                 hashed_password,
                 created_at
             FROM users
-            WHERE phone_number = %s
+            WHERE phone_number = ?
             """,
             (normalized_phone,),
-            )
-            user = cursor.fetchone()
+        ).fetchone()
 
     if user is None:
         password_hash.verify(
@@ -334,12 +395,9 @@ def get_current_user(
     ) as error:
         raise unauthorized_error from error
 
-    with psycopg.connect(
-        DATABASE_URL,
-        row_factory=dict_row,
-    ) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        user = connection.execute(
             """
             SELECT
                 id,
@@ -347,11 +405,10 @@ def get_current_user(
                 phone_number,
                 created_at
             FROM users
-            WHERE id = %s
+            WHERE id = ?
             """,
             (user_id,),
-            )
-            user = cursor.fetchone()
+        ).fetchone()
 
     if user is None:
         raise unauthorized_error
@@ -384,11 +441,9 @@ def dashboard_page() -> FileResponse:
 @app.get("/health")
 def health() -> dict[str, str]:
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                cursor.fetchone()
-    except psycopg.Error as error:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            connection.execute("SELECT 1").fetchone()
+    except sqlite3.Error as error:
         raise HTTPException(
             status_code=503,
             detail="ÐœÐ°Ð°Ð»Ñ‹Ð¼Ð°Ñ‚ Ð±Ð°Ð·Ð°ÑÑ‹ Ð¶ÐµÑ‚ÐºÐ¸Ð»Ð¸ÐºÑÐ¸Ð·.",
@@ -427,9 +482,8 @@ def register_user(
     ).isoformat()
 
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
                 """
                 INSERT INTO users (
                     full_name,
@@ -437,8 +491,7 @@ def register_user(
                     hashed_password,
                     created_at
                 )
-                VALUES (%s, %s, %s, %s)
-                RETURNING id
+                VALUES (?, ?, ?, ?)
                 """,
                 (
                     user_data.full_name.strip(),
@@ -446,10 +499,11 @@ def register_user(
                     hashed_password,
                     created_at,
                 ),
-                )
-                user_id = cursor.fetchone()[0]
+            )
+            connection.commit()
+            user_id = cursor.lastrowid
 
-    except psycopg.errors.UniqueViolation as error:
+    except sqlite3.IntegrityError as error:
         raise HTTPException(
             status_code=409,
             detail="Ð‘ÑƒÐ» Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ð¾Ð¼ÐµÑ€Ð¸ Ð¼ÐµÐ½ÐµÐ½ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚ Ð±Ð°Ñ€.",
@@ -529,9 +583,8 @@ def create_registration(
     created_at = datetime.now(timezone.utc).isoformat()
 
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
                 """
                 INSERT INTO registrations (
                     student_name,
@@ -540,8 +593,7 @@ def create_registration(
                     study_format,
                     created_at
                 )
-                VALUES (%s, %s, %s, %s, %s)
-                RETURNING id
+                VALUES (?, ?, ?, ?, ?)
                 """,
                 (
                     registration.student_name,
@@ -550,10 +602,11 @@ def create_registration(
                     registration.study_format,
                     created_at,
                 ),
-                )
-                registration_id = cursor.fetchone()[0]
+            )
+            connection.commit()
+            registration_id = cursor.lastrowid
 
-    except psycopg.Error as error:
+    except sqlite3.Error as error:
         raise HTTPException(
             status_code=500,
             detail="ÐœÐ°Ð°Ð»Ñ‹Ð¼Ð°Ñ‚Ñ‚Ñ‹ ÑÐ°ÐºÑ‚Ð¾Ð¾Ð´Ð¾ ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
@@ -569,12 +622,9 @@ def get_registrations(
     admin_username: str = Depends(require_admin),
 ) -> dict:
     try:
-        with psycopg.connect(
-            DATABASE_URL,
-            row_factory=dict_row,
-        ) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
                 """
                 SELECT
                     id,
@@ -587,10 +637,9 @@ def get_registrations(
                 FROM registrations
                 ORDER BY id DESC
                 """
-                )
-                rows = cursor.fetchall()
+            ).fetchall()
 
-    except psycopg.Error as error:
+    except sqlite3.Error as error:
         raise HTTPException(
             status_code=500,
             detail="ÐšÐ°Ñ‚Ñ‚Ð°Ð»ÑƒÑƒÐ»Ð°Ñ€Ð´Ñ‹ Ð°Ð»ÑƒÑƒÐ´Ð° ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
@@ -619,12 +668,9 @@ def export_registrations(
     admin_username: str = Depends(require_admin),
 ) -> StreamingResponse:
     try:
-        with psycopg.connect(
-            DATABASE_URL,
-            row_factory=dict_row,
-        ) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
                 """
                 SELECT
                     id,
@@ -637,10 +683,9 @@ def export_registrations(
                 FROM registrations
                 ORDER BY id DESC
                 """
-                )
-                rows = cursor.fetchall()
+            ).fetchall()
 
-    except psycopg.Error as error:
+    except sqlite3.Error as error:
         raise HTTPException(
             status_code=500,
             detail="Ð­ÐºÑÐ¿Ð¾Ñ€Ñ‚Ñ‚Ð¾Ð¾Ð´Ð¾ ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
@@ -698,22 +743,22 @@ def update_registration_status(
     admin_username: str = Depends(require_admin),
 ) -> dict[str, str | int]:
     try:
-        with psycopg.connect(DATABASE_URL) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
                 """
                 UPDATE registrations
-                SET status = %s
-                WHERE id = %s
+                SET status = ?
+                WHERE id = ?
                 """,
                 (
                     status_update.status,
                     registration_id,
                 ),
-                )
-                updated_rows = cursor.rowcount
+            )
+            connection.commit()
+            updated_rows = cursor.rowcount
 
-    except psycopg.Error as error:
+    except sqlite3.Error as error:
         raise HTTPException(
             status_code=500,
             detail="Ð¡Ñ‚Ð°Ñ‚ÑƒÑÑ‚Ñƒ Ó©Ð·Ð³Ó©Ñ€Ñ‚Ò¯Ò¯Ð´Ó© ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
@@ -730,6 +775,127 @@ def update_registration_status(
         "status": status_update.status,
         "message": "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ Ð¶Ð°Ò£Ñ‹Ñ€Ñ‚Ñ‹Ð»Ð´Ñ‹.",
     }
+
+
+COURSE_COLUMNS = """
+    id, title, slug, short_description, full_description, level,
+    duration, price, image_url, icon, position, is_published,
+    created_at, updated_at
+"""
+
+
+def course_from_row(row: sqlite3.Row) -> dict:
+    course = dict(row)
+    course["is_published"] = bool(course["is_published"])
+    return course
+
+
+def get_course_or_404(course_id: int, published_only: bool = False) -> dict:
+    condition = " AND is_published = 1" if published_only else ""
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            f"SELECT {COURSE_COLUMNS} FROM courses WHERE id = ?{condition}",
+            (course_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Курс табылган жок.")
+    return course_from_row(row)
+
+
+@app.get("/api/courses", response_model=list[Course])
+def get_published_courses() -> list[dict]:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            f"SELECT {COURSE_COLUMNS} FROM courses WHERE is_published = 1 ORDER BY position, id"
+        ).fetchall()
+    return [course_from_row(row) for row in rows]
+
+
+@app.get("/api/courses/{course_id}", response_model=Course)
+def get_published_course(course_id: int) -> dict:
+    return get_course_or_404(course_id, published_only=True)
+
+
+@app.get("/api/admin/courses", response_model=list[Course])
+def get_admin_courses(admin_username: str = Depends(require_admin)) -> list[dict]:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        connection.row_factory = sqlite3.Row
+        rows = connection.execute(
+            f"SELECT {COURSE_COLUMNS} FROM courses ORDER BY position, id"
+        ).fetchall()
+    return [course_from_row(row) for row in rows]
+
+
+@app.post("/api/admin/courses", response_model=Course, status_code=status.HTTP_201_CREATED)
+def create_course(course: CourseCreate, admin_username: str = Depends(require_admin)) -> dict:
+    now = datetime.now(timezone.utc).isoformat()
+    values = course.model_dump()
+    try:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO courses (
+                    title, slug, short_description, full_description, level,
+                    duration, price, image_url, icon, position, is_published,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (*values.values(), now, now),
+            )
+            connection.commit()
+            course_id = cursor.lastrowid
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(status_code=409, detail="Бул slug менен курс мурунтан бар.") from error
+    return get_course_or_404(course_id)
+
+
+@app.put("/api/admin/courses/{course_id}", response_model=Course)
+def update_course(course_id: int, course: CourseUpdate, admin_username: str = Depends(require_admin)) -> dict:
+    values = course.model_dump()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        with sqlite3.connect(DATABASE_PATH) as connection:
+            cursor = connection.execute(
+                """
+                UPDATE courses SET
+                    title = ?, slug = ?, short_description = ?, full_description = ?,
+                    level = ?, duration = ?, price = ?, image_url = ?, icon = ?,
+                    position = ?, is_published = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (*values.values(), now, course_id),
+            )
+            connection.commit()
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(status_code=409, detail="Бул slug менен курс мурунтан бар.") from error
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Курс табылган жок.")
+    return get_course_or_404(course_id)
+
+
+@app.patch("/api/admin/courses/{course_id}/publish", response_model=Course)
+def publish_course(course_id: int, update: CoursePublishUpdate, admin_username: str = Depends(require_admin)) -> dict:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.execute(
+            "UPDATE courses SET is_published = ?, updated_at = ? WHERE id = ?",
+            (update.is_published, datetime.now(timezone.utc).isoformat(), course_id),
+        )
+        connection.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Курс табылган жок.")
+    return get_course_or_404(course_id)
+
+
+@app.delete("/api/admin/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course(course_id: int, admin_username: str = Depends(require_admin)) -> Response:
+    with sqlite3.connect(DATABASE_PATH) as connection:
+        cursor = connection.execute("DELETE FROM courses WHERE id = ?", (course_id,))
+        connection.commit()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Курс табылган жок.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/admin", include_in_schema=False)

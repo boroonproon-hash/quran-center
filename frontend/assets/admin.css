@@ -20,6 +20,40 @@ button {
     font: inherit;
 }
 
+.admin-tabs { display: flex; gap: 8px; margin-bottom: 30px; border-bottom: 1px solid #dfe5e1; }
+.admin-tab { padding: 13px 20px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: #718078; cursor: pointer; font-weight: 800; }
+.admin-tab.active { border-bottom-color: #b78d38; color: #174b3a; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.primary-button, .secondary-button, .table-action { cursor: pointer; border-radius: 8px; font-weight: 700; }
+.primary-button { padding: 12px 18px; border: 1px solid #174b3a; background: #174b3a; color: #fff; }
+.secondary-button { padding: 12px 18px; border: 1px solid #cbd5cf; background: #fff; color: #405249; }
+.courses-table { min-width: 900px; }
+.course-title-cell strong, .course-title-cell small { display: block; }
+.course-title-cell small { margin-top: 4px; color: #829087; }
+.publish-badge { display: inline-block; padding: 6px 10px; border-radius: 20px; background: #edf0ee; font-size: 12px; font-weight: 800; }
+.publish-badge.published { background: #e5f5ea; color: #176234; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.table-action { padding: 7px 10px; border: 1px solid #ccd6d0; background: #fff; color: #174b3a; font-size: 12px; }
+.table-action.danger { border-color: #edc9c9; color: #a12d2d; }
+.modal[hidden] { display: none; }
+.modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(10, 32, 25, .62); }
+.modal-dialog { position: relative; width: min(760px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 28px; border-radius: 17px; background: #fff; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.modal-header h2 { font-family: Georgia, serif; }
+.modal-close { border: 0; background: transparent; color: #56665e; cursor: pointer; font-size: 30px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+.form-grid label { display: grid; gap: 7px; color: #405249; font-size: 13px; font-weight: 700; }
+.form-grid input, .form-grid textarea { width: 100%; padding: 11px 12px; border: 1px solid #d7ded9; border-radius: 8px; color: #263c33; font: inherit; }
+.form-grid textarea { resize: vertical; }
+.full-field { grid-column: 1 / -1; }
+.checkbox-field { display: flex !important; align-items: center; }
+.checkbox-field input { width: auto; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.form-feedback { min-height: 20px; margin-top: 14px; color: #a12d2d; }
+body.modal-open { overflow: hidden; }
+
 .admin-container {
     width: min(1180px, 92%);
     margin: 0 auto;
@@ -226,6 +260,11 @@ td {
 }
 
 @media (max-width: 700px) {
+    .admin-tabs { overflow-x: auto; }
+    .form-grid { grid-template-columns: 1fr; }
+    .full-field { grid-column: auto; }
+    .modal-dialog { padding: 20px; }
+
     .admin-main {
         padding-top: 40px;
     }
