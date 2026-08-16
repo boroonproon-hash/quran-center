@@ -1,11 +1,12 @@
 import os
 import secrets
-import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal
 
 import jwt
+import psycopg
+from psycopg.rows import dict_row
 from fastapi import (
     Cookie,
     Depends,
@@ -34,7 +35,12 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 
 FRONTEND_DIR = BASE_DIR / "frontend"
-DATABASE_PATH = BASE_DIR / "backend" / "quran_center.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL Ñ‡Ó©Ð¹Ñ€Ó© Ó©Ð·Ð³Ó©Ñ€Ð¼Ó©ÑÒ¯ ÐºÓ©Ñ€ÑÓ©Ñ‚Ò¯Ð»Ð³Ó©Ð½ ÑÐ¼ÐµÑ."
+    )
 
 ADMIN_USERNAME = os.getenv(
     "QURAN_ADMIN_USERNAME",
@@ -52,7 +58,7 @@ JWT_SECRET = os.getenv("QURAN_JWT_SECRET")
 
 if not JWT_SECRET:
     raise RuntimeError(
-        "QURAN_JWT_SECRET .env файлында көрсөтүлгөн эмес."
+        "QURAN_JWT_SECRET .env Ñ„Ð°Ð¹Ð»Ñ‹Ð½Ð´Ð° ÐºÓ©Ñ€ÑÓ©Ñ‚Ò¯Ð»Ð³Ó©Ð½ ÑÐ¼ÐµÑ."
     )
 
 JWT_ALGORITHM = "HS256"
@@ -68,7 +74,7 @@ DUMMY_PASSWORD_HASH = password_hash.hash(
 app = FastAPI(
     title="Quran Center",
     version="0.2.0",
-    description="Quran Center окуу борборунун веб-сайты",
+    description="Quran Center Ð¾ÐºÑƒÑƒ Ð±Ð¾Ñ€Ð±Ð¾Ñ€ÑƒÐ½ÑƒÐ½ Ð²ÐµÐ±-ÑÐ°Ð¹Ñ‚Ñ‹",
 )
 
 
@@ -84,21 +90,21 @@ class RegistrationCreate(BaseModel):
     phone_number: str = Field(min_length=9, max_length=30)
 
     course_name: Literal[
-        "Куран алиппеси",
-        "Куран окуу",
-        "Тажвид",
-        "Хифз",
-        "Балдар курсу",
-        "Чоңдор курсу",
+        "ÐšÑƒÑ€Ð°Ð½ Ð°Ð»Ð¸Ð¿Ð¿ÐµÑÐ¸",
+        "ÐšÑƒÑ€Ð°Ð½ Ð¾ÐºÑƒÑƒ",
+        "Ð¢Ð°Ð¶Ð²Ð¸Ð´",
+        "Ð¥Ð¸Ñ„Ð·",
+        "Ð‘Ð°Ð»Ð´Ð°Ñ€ ÐºÑƒÑ€ÑÑƒ",
+        "Ð§Ð¾Ò£Ð´Ð¾Ñ€ ÐºÑƒÑ€ÑÑƒ",
     ]
 
-    study_format: Literal["Онлайн", "Офлайн"]
+    study_format: Literal["ÐžÐ½Ð»Ð°Ð¹Ð½", "ÐžÑ„Ð»Ð°Ð¹Ð½"]
 
 class RegistrationStatusUpdate(BaseModel):
     status: Literal[
-        "Жаңы",
-        "Байланыштык",
-        "Окууга кабыл алынды",
+        "Ð–Ð°Ò£Ñ‹",
+        "Ð‘Ð°Ð¹Ð»Ð°Ð½Ñ‹ÑˆÑ‚Ñ‹Ðº",
+        "ÐžÐºÑƒÑƒÐ³Ð° ÐºÐ°Ð±Ñ‹Ð» Ð°Ð»Ñ‹Ð½Ð´Ñ‹",
     ]
 
 class UserAccountCreate(BaseModel):
@@ -135,49 +141,38 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 def create_database() -> None:
-    with sqlite3.connect(DATABASE_PATH) as connection:
-        connection.execute(
+    with psycopg.connect(DATABASE_URL) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS registrations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id BIGSERIAL PRIMARY KEY,
                 student_name TEXT NOT NULL,
                 phone_number TEXT NOT NULL,
                 course_name TEXT NOT NULL,
                 study_format TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'Жаңы',
-                created_at TEXT NOT NULL
+                status TEXT NOT NULL DEFAULT 'Ð–Ð°Ò£Ñ‹',
+                created_at TIMESTAMPTZ NOT NULL
             )
             """
-        )
-
-        existing_columns = {
-            column[1]
-            for column in connection.execute(
-                "PRAGMA table_info(registrations)"
-            ).fetchall()
-        }
-
-        if "status" not in existing_columns:
-            connection.execute(
-                """
-                ALTER TABLE registrations
-                ADD COLUMN status TEXT NOT NULL DEFAULT 'Жаңы'
-                """
             )
-
-        connection.execute(
+            cursor.execute(
+            """
+            ALTER TABLE registrations
+            ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'Ð–Ð°Ò£Ñ‹'
+            """
+            )
+            cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id BIGSERIAL PRIMARY KEY,
                 full_name TEXT NOT NULL,
                 phone_number TEXT NOT NULL UNIQUE,
                 hashed_password TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TIMESTAMPTZ NOT NULL
             )
             """
-        )
-
-        connection.commit()
+            )
 
 
 create_database()
@@ -199,7 +194,7 @@ def require_admin(
     if not username_is_correct or not password_is_correct:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Логин же сырсөз туура эмес.",
+            detail="Ð›Ð¾Ð³Ð¸Ð½ Ð¶Ðµ ÑÑ‹Ñ€ÑÓ©Ð· Ñ‚ÑƒÑƒÑ€Ð° ÑÐ¼ÐµÑ.",
             headers={"WWW-Authenticate": "Basic"},
         )
 
@@ -256,10 +251,12 @@ def authenticate_user(
         phone_number
     )
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
-        connection.row_factory = sqlite3.Row
-
-        user = connection.execute(
+    with psycopg.connect(
+        DATABASE_URL,
+        row_factory=dict_row,
+    ) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
             """
             SELECT
                 id,
@@ -268,10 +265,11 @@ def authenticate_user(
                 hashed_password,
                 created_at
             FROM users
-            WHERE phone_number = ?
+            WHERE phone_number = %s
             """,
             (normalized_phone,),
-        ).fetchone()
+            )
+            user = cursor.fetchone()
 
     if user is None:
         password_hash.verify(
@@ -304,7 +302,7 @@ def get_current_user(
 ) -> dict:
     unauthorized_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Кирүү мөөнөтү бүттү же токен туура эмес.",
+        detail="ÐšÐ¸Ñ€Ò¯Ò¯ Ð¼Ó©Ó©Ð½Ó©Ñ‚Ò¯ Ð±Ò¯Ñ‚Ñ‚Ò¯ Ð¶Ðµ Ñ‚Ð¾ÐºÐµÐ½ Ñ‚ÑƒÑƒÑ€Ð° ÑÐ¼ÐµÑ.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     access_token = (
@@ -331,10 +329,12 @@ def get_current_user(
     ) as error:
         raise unauthorized_error from error
 
-    with sqlite3.connect(DATABASE_PATH) as connection:
-        connection.row_factory = sqlite3.Row
-
-        user = connection.execute(
+    with psycopg.connect(
+        DATABASE_URL,
+        row_factory=dict_row,
+    ) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
             """
             SELECT
                 id,
@@ -342,10 +342,11 @@ def get_current_user(
                 phone_number,
                 created_at
             FROM users
-            WHERE id = ?
+            WHERE id = %s
             """,
             (user_id,),
-        ).fetchone()
+            )
+            user = cursor.fetchone()
 
     if user is None:
         raise unauthorized_error
@@ -377,6 +378,17 @@ def dashboard_page() -> FileResponse:
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    try:
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+    except psycopg.Error as error:
+        raise HTTPException(
+            status_code=503,
+            detail="ÐœÐ°Ð°Ð»Ñ‹Ð¼Ð°Ñ‚ Ð±Ð°Ð·Ð°ÑÑ‹ Ð¶ÐµÑ‚ÐºÐ¸Ð»Ð¸ÐºÑÐ¸Ð·.",
+        ) from error
+
     return {
         "status": "ok",
         "database": "connected",
@@ -398,7 +410,7 @@ def register_user(
     if len(normalized_phone) < 9:
         raise HTTPException(
             status_code=422,
-            detail="Телефон номери туура эмес.",
+            detail="Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ð¾Ð¼ÐµÑ€Ð¸ Ñ‚ÑƒÑƒÑ€Ð° ÑÐ¼ÐµÑ.",
         )
 
     hashed_password = password_hash.hash(
@@ -410,8 +422,9 @@ def register_user(
     ).isoformat()
 
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            cursor = connection.execute(
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
                 """
                 INSERT INTO users (
                     full_name,
@@ -419,7 +432,8 @@ def register_user(
                     hashed_password,
                     created_at
                 )
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
                 """,
                 (
                     user_data.full_name.strip(),
@@ -427,15 +441,13 @@ def register_user(
                     hashed_password,
                     created_at,
                 ),
-            )
+                )
+                user_id = cursor.fetchone()[0]
 
-            connection.commit()
-            user_id = cursor.lastrowid
-
-    except sqlite3.IntegrityError as error:
+    except psycopg.errors.UniqueViolation as error:
         raise HTTPException(
             status_code=409,
-            detail="Бул телефон номери менен аккаунт бар.",
+            detail="Ð‘ÑƒÐ» Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ð¾Ð¼ÐµÑ€Ð¸ Ð¼ÐµÐ½ÐµÐ½ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚ Ð±Ð°Ñ€.",
         ) from error
 
     access_token = create_access_token(
@@ -468,7 +480,7 @@ def login_user(
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Телефон номери же сырсөз туура эмес.",
+            detail="Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½ Ð½Ð¾Ð¼ÐµÑ€Ð¸ Ð¶Ðµ ÑÑ‹Ñ€ÑÓ©Ð· Ñ‚ÑƒÑƒÑ€Ð° ÑÐ¼ÐµÑ.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -493,7 +505,7 @@ def logout_user(response: Response) -> dict[str, str]:
     )
 
     return {
-        "message": "Аккаунттан ийгиликтүү чыктыңыз."
+        "message": "ÐÐºÐºÐ°ÑƒÐ½Ñ‚Ñ‚Ð°Ð½ Ð¸Ð¹Ð³Ð¸Ð»Ð¸ÐºÑ‚Ò¯Ò¯ Ñ‡Ñ‹ÐºÑ‚Ñ‹Ò£Ñ‹Ð·."
     }
 
 @app.get("/api/auth/me")
@@ -512,8 +524,9 @@ def create_registration(
     created_at = datetime.now(timezone.utc).isoformat()
 
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            cursor = connection.execute(
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
                 """
                 INSERT INTO registrations (
                     student_name,
@@ -522,7 +535,8 @@ def create_registration(
                     study_format,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
                 """,
                 (
                     registration.student_name,
@@ -531,20 +545,18 @@ def create_registration(
                     registration.study_format,
                     created_at,
                 ),
-            )
+                )
+                registration_id = cursor.fetchone()[0]
 
-            connection.commit()
-            registration_id = cursor.lastrowid
-
-    except sqlite3.Error as error:
+    except psycopg.Error as error:
         raise HTTPException(
             status_code=500,
-            detail="Маалыматты сактоодо ката чыкты.",
+            detail="ÐœÐ°Ð°Ð»Ñ‹Ð¼Ð°Ñ‚Ñ‚Ñ‹ ÑÐ°ÐºÑ‚Ð¾Ð¾Ð´Ð¾ ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
         ) from error
 
     return {
         "id": registration_id,
-        "message": "Катталуу өтүнүчү сакталды.",
+        "message": "ÐšÐ°Ñ‚Ñ‚Ð°Ð»ÑƒÑƒ Ó©Ñ‚Ò¯Ð½Ò¯Ñ‡Ò¯ ÑÐ°ÐºÑ‚Ð°Ð»Ð´Ñ‹.",
     }
 
 @app.get("/api/registrations")
@@ -552,10 +564,12 @@ def get_registrations(
     admin_username: str = Depends(require_admin),
 ) -> dict:
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            connection.row_factory = sqlite3.Row
-
-            rows = connection.execute(
+        with psycopg.connect(
+            DATABASE_URL,
+            row_factory=dict_row,
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
                 """
                 SELECT
                     id,
@@ -568,12 +582,13 @@ def get_registrations(
                 FROM registrations
                 ORDER BY id DESC
                 """
-            ).fetchall()
+                )
+                rows = cursor.fetchall()
 
-    except sqlite3.Error as error:
+    except psycopg.Error as error:
         raise HTTPException(
             status_code=500,
-            detail="Катталууларды алууда ката чыкты.",
+            detail="ÐšÐ°Ñ‚Ñ‚Ð°Ð»ÑƒÑƒÐ»Ð°Ñ€Ð´Ñ‹ Ð°Ð»ÑƒÑƒÐ´Ð° ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
         ) from error
 
     registrations = [
@@ -599,10 +614,12 @@ def export_registrations(
     admin_username: str = Depends(require_admin),
 ) -> StreamingResponse:
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            connection.row_factory = sqlite3.Row
-
-            rows = connection.execute(
+        with psycopg.connect(
+            DATABASE_URL,
+            row_factory=dict_row,
+        ) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
                 """
                 SELECT
                     id,
@@ -615,12 +632,13 @@ def export_registrations(
                 FROM registrations
                 ORDER BY id DESC
                 """
-            ).fetchall()
+                )
+                rows = cursor.fetchall()
 
-    except sqlite3.Error as error:
+    except psycopg.Error as error:
         raise HTTPException(
             status_code=500,
-            detail="Экспорттоодо ката чыкты.",
+            detail="Ð­ÐºÑÐ¿Ð¾Ñ€Ñ‚Ñ‚Ð¾Ð¾Ð´Ð¾ ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
         ) from error
 
     csv_file = io.StringIO()
@@ -635,13 +653,13 @@ def export_registrations(
 
     writer.writerow(
         [
-            "№",
-            "Аты-жөнү",
-            "Телефон",
-            "Курс",
-            "Формат",
-            "Статус",
-            "Катталган убакыт",
+            "â„–",
+            "ÐÑ‚Ñ‹-Ð¶Ó©Ð½Ò¯",
+            "Ð¢ÐµÐ»ÐµÑ„Ð¾Ð½",
+            "ÐšÑƒÑ€Ñ",
+            "Ð¤Ð¾Ñ€Ð¼Ð°Ñ‚",
+            "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ",
+            "ÐšÐ°Ñ‚Ñ‚Ð°Ð»Ð³Ð°Ð½ ÑƒÐ±Ð°ÐºÑ‹Ñ‚",
         ]
     )
 
@@ -675,37 +693,37 @@ def update_registration_status(
     admin_username: str = Depends(require_admin),
 ) -> dict[str, str | int]:
     try:
-        with sqlite3.connect(DATABASE_PATH) as connection:
-            cursor = connection.execute(
+        with psycopg.connect(DATABASE_URL) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
                 """
                 UPDATE registrations
-                SET status = ?
-                WHERE id = ?
+                SET status = %s
+                WHERE id = %s
                 """,
                 (
                     status_update.status,
                     registration_id,
                 ),
-            )
+                )
+                updated_rows = cursor.rowcount
 
-            connection.commit()
-
-    except sqlite3.Error as error:
+    except psycopg.Error as error:
         raise HTTPException(
             status_code=500,
-            detail="Статусту өзгөртүүдө ката чыкты.",
+            detail="Ð¡Ñ‚Ð°Ñ‚ÑƒÑÑ‚Ñƒ Ó©Ð·Ð³Ó©Ñ€Ñ‚Ò¯Ò¯Ð´Ó© ÐºÐ°Ñ‚Ð° Ñ‡Ñ‹ÐºÑ‚Ñ‹.",
         ) from error
 
-    if cursor.rowcount == 0:
+    if updated_rows == 0:
         raise HTTPException(
             status_code=404,
-            detail="Катталуу табылган жок.",
+            detail="ÐšÐ°Ñ‚Ñ‚Ð°Ð»ÑƒÑƒ Ñ‚Ð°Ð±Ñ‹Ð»Ð³Ð°Ð½ Ð¶Ð¾Ðº.",
         )
 
     return {
         "id": registration_id,
         "status": status_update.status,
-        "message": "Статус жаңыртылды.",
+        "message": "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ Ð¶Ð°Ò£Ñ‹Ñ€Ñ‚Ñ‹Ð»Ð´Ñ‹.",
     }
 
 
