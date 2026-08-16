@@ -1,9 +1,10 @@
+import csv
+import io
 import os
 import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Literal
 
 import jwt
 from fastapi import (
@@ -26,8 +27,6 @@ from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-import csv
-import io
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
