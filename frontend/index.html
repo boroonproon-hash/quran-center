@@ -37,8 +37,17 @@
         </nav>
 
         <div class="header-actions">
-    <a href="/login" class="login-link">Кирүү</a>
-    <a href="/register" class="header-button">Аккаунт ачуу</a>
+    <a href="/login" class="login-link" data-auth="guest">
+        Кирүү
+    </a>
+
+    <a href="/register" class="header-button" data-auth="guest">
+        Аккаунт ачуу
+    </a>
+
+    <a href="/dashboard" class="header-button" data-auth="user" hidden>
+        Жеке кабинет
+    </a>
 </div>
         <button
     class="menu-button"
@@ -57,8 +66,9 @@
     <a href="#learning">Куран үйрөнүү</a>
     <a href="#teachers">Мугалимдер</a>
     <a href="#contact">Байланыш</a>
-    <a href="/login">Кирүү</a>
-    <a href="/register">Аккаунт ачуу</a>
+    <a href="/login" data-auth="guest">Кирүү</a>
+    <a href="/register" data-auth="guest">Аккаунт ачуу</a>
+    <a href="/dashboard" data-auth="user" hidden>Жеке кабинет</a>
 </nav>
 </header>
 
@@ -598,7 +608,7 @@
         <a href="#home">Жогору көтөрүлүү ↑</a>
     </div>
 </footer>
-<script src="/assets/app.js"></script>
+<script src="/assets/app.js?v=2"></script>
 
 </body>
 </html>

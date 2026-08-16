@@ -1128,4 +1128,6 @@ a {
     .header-actions {
         display: none;
     }
+}[hidden] {
+    display: none !important;
 }

@@ -150,4 +150,41 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+});document.addEventListener("DOMContentLoaded", async () => {
+    const guestLinks = document.querySelectorAll('[data-auth="guest"]');
+    const userLinks = document.querySelectorAll('[data-auth="user"]');
+
+    function showGuestNavigation() {
+        guestLinks.forEach((link) => {
+            link.hidden = false;
+        });
+
+        userLinks.forEach((link) => {
+            link.hidden = true;
+        });
+    }
+
+    function showUserNavigation() {
+        guestLinks.forEach((link) => {
+            link.hidden = true;
+        });
+
+        userLinks.forEach((link) => {
+            link.hidden = false;
+        });
+    }
+
+    try {
+        const response = await fetch("/api/auth/me", {
+            credentials: "same-origin",
+        });
+
+        if (response.ok) {
+            showUserNavigation();
+        } else {
+            showGuestNavigation();
+        }
+    } catch {
+        showGuestNavigation();
+    }
 });
