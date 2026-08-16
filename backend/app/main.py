@@ -107,11 +107,10 @@ class RegistrationCreate(BaseModel):
     )
 
 class RegistrationStatusUpdate(BaseModel):
-    status: Literal[
-        "Ð–Ð°Ò£Ñ‹",
-        "Ð‘Ð°Ð¹Ð»Ð°Ð½Ñ‹ÑˆÑ‚Ñ‹Ðº",
-        "ÐžÐºÑƒÑƒÐ³Ð° ÐºÐ°Ð±Ñ‹Ð» Ð°Ð»Ñ‹Ð½Ð´Ñ‹",
-    ]
+    status: str = Field(
+        min_length=2,
+        max_length=50,
+    )
 
 class UserAccountCreate(BaseModel):
     full_name: str = Field(
